@@ -24,139 +24,6 @@ s_fs_name_v = [x.lower() for x in s_fs_name_v]
 pd.Series(s_fs_name_v).value_counts()
 
 
-# Function to take in a vector of text
-# to return a cleaned vector of text
-# NOTE: map is faster than list comprehension. See:
-#       https://www.geeksforgeeks.org/python-map-vs-list-comprehension/
-#%%
-def process_further_study_verbatim(string):
-
-    # To lowercase
-    string = map(str.lower, string)
-
-    # Remove white space at either end of string
-    string = map(str.strip, string)
-
-    # Remove extra spaces between words
-    string = map(lambda x: re.sub(" +", " ", x), string)
-
-    # Different spelling for Bachelor
-    string = map(lambda x: re.sub("b of ", "bachelor  of ", x), string)
-
-    string = map(lambda x: re.sub("bacgelor ", "bachelor ", x), string)
-
-    string = map(lambda x: re.sub("bach ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bachalor ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bachel ", "bachelor ",x), string)
-    string = map(lambda x: re.sub("bachelo ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bachelour ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bacherlor ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bachlelor ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bachleor ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bachloer ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bachlor ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bacholar ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bacholer ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bacholor ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bacholors ", "bachelor ", x), string)
-
-    string = map(lambda x: re.sub("bahelor ", "bachelor ", x), string)
-
-    string = map(lambda x: re.sub("batch of ", "bachelor of ", x), string)
-    string = map(lambda x: re.sub("batchelor ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("batchler ", "bachelor ", x), string)
-
-    string = map(lambda x: re.sub("bauchor ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bechalor ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("bechlor ", "bachelor ", x), string)
-    string = map(lambda x: re.sub("becholar ", "bachelor ", x), string)
-
-    string = map(lambda x: re.sub("bchelor ", "bachelor ", x), string)
-
-    # diplomas and advanced diplomas
-    string = map(lambda x: re.sub("adv ", "advanced ", x), string)
-    string = map(lambda x: re.sub("advance ", "advanced ", x), string)
-    string = map(lambda x: re.sub("dip ", "diploma ", x), string)
-    string = map(lambda x: re.sub("diplom ", "diploma ", x), string)
-    string = map(lambda x: re.sub("diploma in ", "diploma of ", x), string)
-    string = map(lambda x: re.sub("advanced deploma ", "advanced diploma ", x), string)
-    string = map(lambda x: re.sub("advanced dioloma ", "advanced diploma ", x), string)
-    string = map(lambda x: re.sub("advanced deplima ", "advanced diploma ", x), string)
-    string = map(lambda x: re.sub("advanced dipolma ", "advanced diploma ", x), string)
-
-    # Certificates
-    string = map(lambda x: re.sub("cert ", "certificate ", x), string)
-    string = map(lambda x: re.sub("cart ii ", "certificate ii ", x), string)
-    string = map(lambda x: re.sub("cartificate ", "certificate ", x), string)
-    string = map(lambda x: re.sub("cerficate ", "certificate ", x), string)
-    string = map(lambda x: re.sub("ceritificate ", "certificate ", x), string)
-    string = map(lambda x: re.sub("cerificate ", "certificate ", x), string)
-    string = map(lambda x: re.sub("certicate ", "certificate ", x), string)
-    string = map(lambda x: re.sub("certifacate ", "certificate ", x), string)
-    string = map(lambda x: re.sub("certifcate ", "certificate ", x), string)
-    string = map(lambda x: re.sub("certificat ", "certificate ", x), string)
-    string = map(lambda x: re.sub("certifucate ", "certificate ", x), string)
-    string = map(lambda x: re.sub("certigicate ", "certificate ", x), string)
-    string = map(lambda x: re.sub("cert1 ", "certificate i ", x), string)
-    string = map(lambda x: re.sub("cert111 ", "certificate iii ", x), string)
-    string = map(lambda x: re.sub("cert1v ", "certificate iv ", x), string)
-    string = map(lambda x: re.sub("cer ii ", "certificate  ii ", x), string)
-    string = map(lambda x: re.sub("cer iii ", "certificate  iii ", x), string)
-    string = map(lambda x: re.sub("cer iv ", "certificate  iv ", x), string)
-    string = map(lambda x: re.sub("certii ", "certificate  ii ", x), string)
-    string = map(lambda x: re.sub("certiii ", "certificate  iii ", x), string)
-    string = map(lambda x: re.sub("certiv ", "certificate  iv ", x), string)
-    string = map(lambda x: re.sub("certificate l ", "certificate i ", x), string)
-    string = map(lambda x: re.sub("certificate1 ", "certificate i ", x), string)
-    string = map(lambda x: re.sub("certificate1in ", "certificate i in ", x), string)
-    string = map(lambda x: re.sub("certificate ll ", "certificate ii ", x), string)
-    string = map(lambda x: re.sub("certificateii ", "certificate ii ", x), string)
-    string = map(lambda x: re.sub("certificateiii ", "certificate iii ", x), string)
-    string = map(lambda x: re.sub("certificate four ", "certificate iv ", x), string)
-    string = map(lambda x: re.sub("certificate three ", "certificate iii ", x), string)
-    string = map(lambda x: re.sub("certificate two ", "certificate ii ", x), string)
-    string = map(lambda x: re.sub("certificates iii ", "certificate iii ", x), string)
-    string = map(lambda x: re.sub("certificates three ", "certificate iii ", x), string)
-    string = map(lambda x: re.sub("certificates iv ", "certificate iv ", x), string)
-    string = map(lambda x: re.sub("certification iii ", "certificate iii ", x), string)
-    string = map(lambda x: re.sub("certification iv ", "certificate iv ", x), string)
-    string = map(lambda x: re.sub("certificate 1 ", "certificate i ", x), string)
-    string = map(lambda x: re.sub("certificate 11 ", "certificate ii ", x), string)
-    string = map(lambda x: re.sub("certificate 1v ", "certificate iv ", x), string)
-    string = map(lambda x: re.sub("certificate 1in ", "certificate i in ", x), string)
-    string = map(lambda x: re.sub("certificate vi ", "certificate iv ", x), string) # there are no cert 6
-    string = map(lambda x: re.sub("certificate 1 ", "certificate i ", x), string)
-    string = map(lambda x: re.sub("very iv ", "certificate iv ", x), string)        # mobile word prediction cert > very
-    string = map(lambda x: re.sub("\\<111\\>", "iii", x), string)
-    string = map(lambda x: re.sub("4", "iv", x), string)
-    string = map(lambda x: re.sub("3", "iii", x), string)
-    string = map(lambda x: re.sub("2", "ii", x), string)
-    string = map(lambda x: re.sub("lll", "iii", x), string)
-    string = map(lambda x: re.sub("lv", "iv", x), string)
-
-    # s_fs_name_v = gsub("certification ||| ", "certificate iii ", s_fs_name_v),
-
-    # Masters degres
-    string = map(lambda x: re.sub("masters of", "master of", x), string)
-    string = map(lambda x: re.sub("masters in", "master of", x), string)
-
-    # Associate degrees
-    string = map(lambda x: re.sub("associate degree of ", "associate degree in ", x), string)
-    string = map(lambda x: re.sub("associates degree in ", "associate degree in ", x), string)
-    string = map(lambda x: re.sub("associated degree ", "associate degree ", x), string)
-    string = map(lambda x: re.sub("associates degree ", "associate degree ", x), string)
-
-
-    string = list(string)
-
-    return(string)
-
-# Test function
-process_further_study_verbatim(string)
-
-#%%
-nltk.word_tokenize("Bachellor of business")
-
 # Tokenize strings
 #%%
 course_v = ["Bachellors of nursing ",
@@ -175,7 +42,8 @@ course_v = ["Bachellors of nursing ",
             "dip in Early childhood education and care",
             "associates degree in ",
             "Bachelor of Business",
-            "Advanced diploma of cyber security"]
+            "Advanced diploma of cyber security",
+            "certificate 4 in Auslan"]
 fs_v = {'id': list(range(1, len(course_v) + 1)),
         's_fs_name_v':course_v
         }
@@ -187,7 +55,7 @@ fs_v = pd.DataFrame(fs_v)
 
 
 #%%
-def split_explode(df, id, colname = 's_fs_name_v'):
+def split_explode(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     # Get only required columns from Student Survey data
     df = df[[id, colname]]
     # df['tokens'] = df[colname].str.split()
@@ -197,10 +65,11 @@ def split_explode(df, id, colname = 's_fs_name_v'):
     return(df)
 
 # test
-split_explode(df = fs_v, id = 'id')
+# split_explode(df = fs_v, id = 'id')
+split_explode(df = df[['SurveyResponseID', 's_fs_name_v']].dropna(), id = 'SurveyResponseID')
 
-# Create a function that can be used on a single string,
-# or a pandas.Series
+# Function to take in a string variable, or pandas.Series
+# to return a cleaned vector of text
 #%%
 def string_subs(string):
     string = string.lower()
@@ -228,9 +97,9 @@ def string_subs(string):
     string = re.sub(pattern = "^certii$", repl = "cert ii", string = string)
     string = re.sub(pattern = "^certiii$", repl = "cert iii", string = string)
     string = re.sub(pattern = "^certiv$", repl = "cert iv", string = string)
-    string = re.sub(pattern = "^cert1$", repl = "cert i", string = string)
-    string = re.sub(pattern = "^cert11$", repl = "cert ii", string = string)
-    string = re.sub(pattern = "^cert111$", repl = "cert iii", string = string)
+    string = re.sub(pattern = "^cert1", repl = "cert i", string = string)
+    string = re.sub(pattern = "^cert11", repl = "cert ii", string = string)
+    string = re.sub(pattern = "^cert111", repl = "cert iii", string = string)
 
     # Convert Arabic to Roman numbers
     # (mainly for certificates)
@@ -265,17 +134,52 @@ def string_subs(string):
 
 # test
 #%%
+# NOTE: map is faster than list comprehension. See:
+#       https://www.geeksforgeeks.org/python-map-vs-list-comprehension/
+
 list(map(string_subs, course_v))
 
+# First two functions
 # %%
-temp = split_explode(df = fs_v, colname = 's_fs_name_v')
-temp['tokens2'] = temp['tokens'].apply(string_subs)
+temp = split_explode(df = fs_v, id = 'id', colname = 's_fs_name_v')
+temp['tokens'].apply(string_subs).reset_index(name = 'tokens2')
+
+temp = split_explode(df = df[['SurveyResponseID', 's_fs_name_v']].dropna(), id = 'SurveyResponseID')
+temp['tokens'].apply(string_subs).reset_index(name = 'tokens2')
+
+# Combine tokens back together again
+#%%
+temp.groupby(['id', 's_fs_name_v'])['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
+
 
 # Combined function
 # Take in a data frame, and a column name
 # %%
-def fix_fs_name_v(df, colname = 's_fs_name_v'):
-    # tokenize and convert to narrow data frame
-    tokenized_df = split_explode(df = df, colname = colname)
+def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
+    # Remove rows with s_fs_name_v == NaN
+    df = df.dropna()
 
-    fixed_df
+    # tokenize s_fs_name_v and convert to narrow data frame
+    tokenized_df = split_explode(df = df, id = id, colname = colname)
+
+    # Fix words
+    tokenized_df['tokens2'] = tokenized_df['tokens'].apply(string_subs)
+    
+    # Join tokens together again
+    df_fixed = tokenized_df.groupby([id, colname])['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
+
+    return(df_fixed)
+
+# test
+temp = fix_fs_name_v(df = fs_v, id = 'id')
+temp
+
+# fix real data
+# %%
+df_fixed_interim = fix_fs_name_v(df = df[['SurveyResponseID', 's_fs_name_v']])
+df_fixed_interim
+
+# Check for biggest errors
+# %%
+errors = df_fixed_interim['s_fs_name_v_fixed'].value_counts()
+errors
