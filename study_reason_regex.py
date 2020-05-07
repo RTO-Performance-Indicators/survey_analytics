@@ -65,8 +65,8 @@ def split_explode(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     return(df)
 
 # test
-# split_explode(df = fs_v, id = 'id')
-split_explode(df = df[['SurveyResponseID', 's_fs_name_v']].dropna(), id = 'SurveyResponseID')
+split_explode(df = fs_v, id = 'id')
+# split_explode(df = df[['SurveyResponseID', 's_fs_name_v']].dropna(), id = 'SurveyResponseID')
 
 # Function to take in a string variable, or pandas.Series
 # to return a cleaned vector of text
