@@ -5,49 +5,22 @@ import pandas as pd
 import numpy as np
 
 #%%
-filePath = 'S:/RTOPI/Both Surveys/All Final Datasets/Datasets - 2019/StudentSurveys.csv'
-df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
-df = df[df['SurveyYear'] == 'S2019']
-
-#%%
-df.columns.to_list()
+# filePath = 'S:/RTOPI/Both Surveys/All Final Datasets/Datasets - 2019/StudentSurveys.csv'
+# df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
+# df = df[df['SurveyYear'] == 'S2019']
 
 # SELECT columns that relate to further study (fs)
 # and filter to non-NA verbatim for the course name
+# and save data to csv to use as test
 #%%
-df.filter(regex = "^s_fs", axis = 1)[~pd.isna(df["s_fs_name_v"])]
-
-# Unique s_fs_name_v
-#%%
-s_fs_name_v = df[~pd.isna(df["s_fs_name_v"])]["s_fs_name_v"]
-s_fs_name_v = [x.lower() for x in s_fs_name_v]
-pd.Series(s_fs_name_v).value_counts()
-
+# df = df.filter(regex = "^s_fs", axis = 1)[~pd.isna(df["s_fs_name_v"])]
+# df = df[['s_fs_lev', 's_fs_name_v']]
+# df['id'] = range(1, len(df) + 1)
+# df = df[['id', 's_fs_lev', 's_fs_name_v']]
+# df.to_csv("data/s_fs_name_v.csv")
 
 # Tokenize strings
 #%%
-course_v = ["Bachellors of nursing ",
-            "Cert  IV in business",
-            "cer i in a",
-            "certi b",
-            "certII of c",
-            "CertIV in d",
-            "cert1 in e",
-            "cert11 in f",
-            "Cert111 in g",
-            "cert 1 in h",
-            "Cert one in i",
-            "certif three in j",
-            "Adv Dip in Nursing",
-            "dip in Early childhood education and care",
-            "associates degree in ",
-            "Bachelor of Business",
-            "Advanced diploma of cyber security",
-            "certificate 4 in Auslan"]
-fs_v = {'id': list(range(1, len(course_v) + 1)),
-        's_fs_name_v':course_v
-        }
-fs_v = pd.DataFrame(fs_v)
 # fs_v['tokens'] = fs_v['s_fs_name_v'].str.split()
 # fs_v.explode('tokens')
 # fs_v['tokens'] = fs_v['s_fs_name_v'].apply(lambda x: nltk.word_tokenize(x))
