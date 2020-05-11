@@ -5,6 +5,9 @@ import pandas as pd
 import numpy as np
 
 #%%
+df = pd.read_csv("data/s_fs_name_v.csv")
+
+#%%
 # filePath = 'S:/RTOPI/Both Surveys/All Final Datasets/Datasets - 2019/StudentSurveys.csv'
 # df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
 # df = df[df['SurveyYear'] == 'S2019']
@@ -19,27 +22,22 @@ import numpy as np
 # df = df[['id', 's_fs_lev', 's_fs_name_v']]
 # df.to_csv("data/s_fs_name_v.csv")
 
-# Tokenize strings
-#%%
-# fs_v['tokens'] = fs_v['s_fs_name_v'].str.split()
-# fs_v.explode('tokens')
-# fs_v['tokens'] = fs_v['s_fs_name_v'].apply(lambda x: nltk.word_tokenize(x))
-# fs_v
-
-
+# Function to get a data frame as an input,
+# and convert into a one-token-per-row format
 #%%
 def split_explode(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
-    # Get only required columns from Student Survey data
+    # Get only required columns from Student Survey data,
+    # even when a whole data frame is provided
     df = df[[id, colname]]
-    # df['tokens'] = df[colname].str.split()
     df['tokens'] = df[colname].apply(lambda x: nltk.word_tokenize(x))
     df = df.explode('tokens')
 
     return(df)
 
-# test
-split_explode(df = fs_v, id = 'id')
-# split_explode(df = df[['SurveyResponseID', 's_fs_name_v']].dropna(), id = 'SurveyResponseID')
+# test split_explode function
+#%%
+# split_explode(df = fs_v, id = 'id')
+# split_explode(df = df[['id', 's_fs_name_v']].dropna(), id = 'id')
 
 # Function to take in a string variable, or pandas.Series
 # to return a cleaned vector of text
@@ -110,20 +108,6 @@ def string_subs(string):
 # NOTE: map is faster than list comprehension. See:
 #       https://www.geeksforgeeks.org/python-map-vs-list-comprehension/
 
-list(map(string_subs, course_v))
-
-# First two functions
-# %%
-temp = split_explode(df = fs_v, id = 'id', colname = 's_fs_name_v')
-temp['tokens'].apply(string_subs).reset_index(name = 'tokens2')
-
-temp = split_explode(df = df[['SurveyResponseID', 's_fs_name_v']].dropna(), id = 'SurveyResponseID')
-temp['tokens'].apply(string_subs).reset_index(name = 'tokens2')
-
-# Combine tokens back together again
-#%%
-temp.groupby(['id', 's_fs_name_v'])['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
-
 
 # Combined function
 # Take in a data frame, and a column name
@@ -132,7 +116,7 @@ def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     # Remove rows with s_fs_name_v == NaN
     df = df.dropna()
 
-    # tokenize s_fs_name_v and convert to narrow data frame
+    # tokenize s_fs_name_v and convert to one-token-per-row data frame
     tokenized_df = split_explode(df = df, id = id, colname = colname)
 
     # Fix words
@@ -144,15 +128,17 @@ def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     return(df_fixed)
 
 # test
-temp = fix_fs_name_v(df = fs_v, id = 'id')
+temp = fix_fs_name_v(df = df, id = 'id')
 temp
 
 # fix real data
 # %%
-df_fixed_interim = fix_fs_name_v(df = df[['SurveyResponseID', 's_fs_name_v']])
+df_fixed_interim = fix_fs_name_v(df = df, id = 'id')
 df_fixed_interim
 
 # Check for biggest errors
 # %%
 errors = df_fixed_interim['s_fs_name_v_fixed'].value_counts()
 errors
+
+# %%
