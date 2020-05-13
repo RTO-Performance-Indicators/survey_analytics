@@ -44,8 +44,9 @@ def split_explode(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
 #%%
 def string_subs(string):
     string = string.lower()
-    string = str.strip(string)
-    string = re.sub(" +", " ", string)
+    string = str.strip(string) # strip whitespace
+    string = re.sub("\.+", "", string)
+    string = re.sub(" +", " ", string) # Remove excess spaces
 
     # Fix different ways to spell bachelor
     string = re.sub(pattern = "^bac[a-z]*", repl = "bachelor", string = string)
@@ -142,6 +143,6 @@ errors = df_fixed_interim['s_fs_name_v_fixed'].value_counts()
 errors
 
 # %%
-df_fixed_interim[df_fixed_interim['s_fs_name_v_fixed'] == 'vce year 11']
+df_fixed_interim[df_fixed_interim['s_fs_name_v_fixed'] == 'vce year 12']
 
 # %%
