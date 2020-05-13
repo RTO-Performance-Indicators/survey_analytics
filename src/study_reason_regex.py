@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 #%%
-df = pd.read_csv("data/s_fs_name_v.csv")
+df = pd.read_csv("../data/s_fs_name_v.csv")
 
 #%%
 # filePath = 'S:/RTOPI/Both Surveys/All Final Datasets/Datasets - 2019/StudentSurveys.csv'
@@ -38,6 +38,10 @@ def split_explode(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
 #%%
 # split_explode(df = fs_v, id = 'id')
 # split_explode(df = df[['id', 's_fs_name_v']].dropna(), id = 'id')
+
+# Modify behaviour of word_tokenize to ignore parentheses
+#%%
+#nltk.tokenize.TreebankWordTokenizer.PARENS_BRACKETS = []
 
 # Function to take in a string variable, or pandas.Series
 # to return a cleaned vector of text
@@ -110,6 +114,14 @@ def string_subs(string):
 #       https://www.geeksforgeeks.org/python-map-vs-list-comprehension/
 
 
+#%%
+def fix_parentheses(string):
+    string = re.sub(pattern = r"\( ", repl = r"\(", string = string)
+    string = re.sub(pattern = r" \)", repl = r"\)", string = string)
+    
+    return(string)
+
+
 # Combined function
 # Take in a data frame, and a column name
 # %%
@@ -125,6 +137,9 @@ def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     
     # Join tokens together again
     df_fixed = tokenized_df.groupby([id, colname])['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
+
+    # Fix spaces before and after parentheses
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_parentheses)
 
     return(df_fixed)
 
