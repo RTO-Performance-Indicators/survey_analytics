@@ -8,27 +8,28 @@ import numpy as np
 df = pd.read_csv("../data/s_fs_name_v.csv")
 
 #%%
-filePath = 'S:/RTOPI/Both Surveys/All Final Datasets/Datasets - 2019/StudentSurveys.csv'
-df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
-df = df[df['SurveyYear'] == 'S2019']
+# filePath = 'S:/RTOPI/Both Surveys/All Final Datasets/Datasets - 2019/StudentSurveys.csv'
+# df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
+# df = df[df['SurveyYear'] == 'S2019']
 
 #%%
 s_fs_lev_dict = {'s_fs_lev': [1, 2, 3, 4, 5, 6, 7, 8, 9],
                  'level_description': ['certificate i', 'certificate ii',
                                        'certificate iii', 'certificate iv',
                                        'vce or vcal', 'diploma',
-                                       'advanced diploma', 'degree', 'higher than a degree']}
+                                       'advanced diploma', 'bachelor', 'higher than a degree']}
 s_fs_lev_dict = pd.DataFrame(s_fs_lev_dict)
 
 # SELECT columns that relate to further study (fs)
 # and filter to non-NA verbatim for the course name
 # and save data to csv to use as test
 #%%
-df = df.filter(regex = "^s_fs", axis = 1)[~pd.isna(df["s_fs_name_v"])]
-df = df[['s_fs_lev', 's_fs_name_v']]
-df['id'] = range(1, len(df) + 1)
-df = df[['id', 's_fs_lev', 's_fs_name_v']]
-df.to_csv("../data/s_fs_name_v.csv")
+# df = df.filter(regex = "^s_fs", axis = 1)[~pd.isna(df["s_fs_name_v"])]
+# df = df[['s_fs_lev', 's_fs_name_v']]
+# df['id'] = range(1, len(df) + 1)
+# df = df[['id', 's_fs_lev', 's_fs_name_v']]
+# df = pd.merge(df, s_fs_lev_dict, how = 'left')
+# df.to_csv("../data/s_fs_name_v.csv")
 
 # Function to get a data frame as an input,
 # and convert into a one-token-per-row format
