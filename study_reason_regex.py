@@ -74,10 +74,10 @@ def string_subs(string):
 
     # Convert Arabic to Roman numbers
     # (mainly for certificates)
-    string = re.sub(pattern = "1", repl = "i", string = string)
-    string = re.sub(pattern = "2", repl = "ii", string = string)
-    string = re.sub(pattern = "3", repl = "iii", string = string)
-    string = re.sub(pattern = "4", repl = "iv", string = string)
+    string = re.sub(pattern = "^1$", repl = "i", string = string)
+    string = re.sub(pattern = "^2$", repl = "ii", string = string)
+    string = re.sub(pattern = "^3$", repl = "iii", string = string)
+    string = re.sub(pattern = "^4$", repl = "iv", string = string)
 
     # Convert English to Roman numbers
     # (mainly for certificates)
@@ -140,5 +140,8 @@ df_fixed_interim
 # %%
 errors = df_fixed_interim['s_fs_name_v_fixed'].value_counts()
 errors
+
+# %%
+df_fixed_interim[df_fixed_interim['s_fs_name_v_fixed'] == 'vce year 11']
 
 # %%
