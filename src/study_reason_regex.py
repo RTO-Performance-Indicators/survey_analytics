@@ -13,12 +13,12 @@ df = pd.read_csv("../data/s_fs_name_v.csv")
 # df = df[df['SurveyYear'] == 'S2019']
 
 #%%
-s_fs_lev_dict = {'s_fs_lev': [1, 2, 3, 4, 5, 6, 7, 8, 9],
-                 'level_description': ['certificate i', 'certificate ii',
-                                       'certificate iii', 'certificate iv',
-                                       'vce or vcal', 'diploma',
-                                       'advanced diploma', 'bachelor', 'higher than a degree']}
-s_fs_lev_dict = pd.DataFrame(s_fs_lev_dict)
+# s_fs_lev_dict = {'s_fs_lev': [1, 2, 3, 4, 5, 6, 7, 8, 9],
+#                  'level_description': ['certificate i', 'certificate ii',
+#                                        'certificate iii', 'certificate iv',
+#                                        'vce or vcal', 'diploma',
+#                                        'advanced diploma', 'bachelor', 'higher than a degree']}
+# s_fs_lev_dict = pd.DataFrame(s_fs_lev_dict)
 
 # SELECT columns that relate to further study (fs)
 # and filter to non-NA verbatim for the course name
@@ -173,6 +173,35 @@ def fix_accounting_bookkeeping(string):
     else:
         return(string)
 
+def fix_electrotech(string):
+    electrotech_misspellings = ['electro technology', 'electro tech', 'electrotech']
+
+    if string in electrotech_misspellings:
+        return('electrotechnology')
+    else:
+        return(string)
+
+def fix_vet_nursing(string):
+    vet_nursing_misspellings = ['vet nursing']
+
+    if string in vet_nursing_misspellings:
+        return('veterinary nursing')
+    else:
+        return(string)
+
+#%%
+def add_cert_details(row):
+    if (row['s_fs_lev'] in [1, 2, 3, 4]) & (row['level_desc_in_fixed'] == False):
+        return(row['level_description'] + " in " + row['s_fs_name_v_fixed'])
+    else:
+        return(row['s_fs_name_v_fixed'])
+
+def add_dip_details(row):
+    if (row['s_fs_lev'] in [6, 7]) & (row['level_desc_in_fixed'] == False):
+        return(row['level_description'] + " of " + row['s_fs_name_v_fixed'])
+    else:
+        return(row['s_fs_name_v_fixed'])
+
 
 # Combined function
 # Take in a data frame, and a column name
@@ -204,6 +233,15 @@ def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_it)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_accounting_bookkeeping)
 
+    # Flag whether qualification information is already in the fixed string
+    df_fixed['level_description'] = df_fixed['level_description'].astype('string')
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].astype('string')
+    df_fixed['level_desc_in_fixed'] = df_fixed.apply(lambda x: x.level_description in x.s_fs_name_v_fixed, axis = 1)
+
+    # Add certificate and diploma info
+    df_fixed['s_fs_name_v_fixed'] = df_fixed.apply(lambda x: add_cert_details(x), axis = 1)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed.apply(lambda x: add_dip_details(x), axis = 1)
+
     return(df_fixed)
 
 # test
@@ -222,8 +260,8 @@ df_fixed_interim[df_fixed_interim['s_fs_name_v_fixed'] == 'vce year 12']
 
 # Check if the level_description is in the fixed verbatim
 # %%
-df_fixed_interim['level_description'] = df_fixed_interim['level_description'].astype('string')
-df_fixed_interim['s_fs_name_v_fixed'] = df_fixed_interim['s_fs_name_v_fixed'].astype('string')
+# df_fixed_interim['level_description'] = df_fixed_interim['level_description'].astype('string')
+# df_fixed_interim['s_fs_name_v_fixed'] = df_fixed_interim['s_fs_name_v_fixed'].astype('string')
 df_fixed_interim['level_desc_in_fixed'] = df_fixed_interim.apply(lambda x: x.level_description in x.s_fs_name_v_fixed, axis = 1)
 temp = df_fixed_interim[df_fixed_interim['level_desc_in_fixed'] == False]['s_fs_name_v_fixed'].value_counts()
 
