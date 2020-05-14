@@ -85,12 +85,15 @@ def string_subs(string):
 
     # Convert English to Roman numbers
     # (mainly for certificates)
-    string = re.sub(pattern = "one", repl = "i", string = string)
-    string = re.sub(pattern = "two", repl = "ii", string = string)
-    string = re.sub(pattern = "three", repl = "iii", string = string)
-    string = re.sub(pattern = "four", repl = "iv", string = string)
+    string = re.sub(pattern = "^one$", repl = "i", string = string)
+    string = re.sub(pattern = "^two$", repl = "ii", string = string)
+    string = re.sub(pattern = "^three$", repl = "iii", string = string)
+    string = re.sub(pattern = "^four$", repl = "iv", string = string)
 
-    string = re.sub(pattern = "1v", repl = "iv", string = string)
+    # Different ways of signalling IV
+    string = re.sub(pattern = "^1v$", repl = "iv", string = string)
+    string = re.sub(pattern = "^lv$", repl = "iv", string = string)
+    string = re.sub(pattern = "^iiii$", repl = "iv", string = string)
 
     # Fix different ways to spell certificate
     string = re.sub(pattern = "^cert[a-z]*", repl = "certificate", string = string)
@@ -114,12 +117,69 @@ def fix_parentheses(string):
     
     return(string)
 
+#%%
+def fix_ecec(string):
+    ecec_misspellings = ['early childhood', 'childcare', 'child care', 'early childhood education',
+                         'early childhood and education', 'ecec', 'childcare course',
+                         'early education']
+    
+    if string in ecec_misspellings:
+        return('early childhood education and care')
+    else:
+        return(string)
+
+def fix_aged_care(string):
+    aged_care_misspellings = ['agecare', 'agedcare', 'age care', 'aged care course']
+
+    if string in aged_care_misspellings:
+        return('aged care')
+    else:
+        return(string)
+
+def fix_health_services(string):
+    health_services_misspellings = ['health service assistance', 
+                                    'health service assistant', 
+                                    'health services assistance']
+
+    if string in health_services_misspellings:
+        return('health services assistance')
+    else:
+        return(string)
+
+def fix_light_vehicle_mech(string):
+    health_services_misspellings = ['light vehicle mechanic', 
+                                    'light vehicle mechanics']
+
+    if string in health_services_misspellings:
+        return('light vehicle mechanical technology')
+    else:
+        return(string)
+
+def fix_it(string):
+    it_misspellings = ['it']
+
+    if string in it_misspellings:
+        return('information technology')
+    else:
+        return(string)
+
+def fix_accounting_bookkeeping(string):
+    acc_bookkeeping_misspellings = ['accountant and bookkeeping', 'accounting + bookkeeping',
+                                    'accounting and booking', 'accounting and bookkeeper'
+                                    'accounting and bookmaker']
+
+    if string in acc_bookkeeping_misspellings:
+        return('accounting and bookkeeping')
+    else:
+        return(string)
+
+
 # Combined function
 # Take in a data frame, and a column name
 # %%
 def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     
-    # df = df.dropna()
+    df = df.dropna()
 
     # tokenize s_fs_name_v and convert to one-token-per-row data frame
     tokenized_df = split_explode(df = df, id = id, colname = colname)
@@ -136,6 +196,14 @@ def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     # Join df_fixed and original df
     df_fixed = pd.merge(df, df_fixed)
 
+    # Fix common misspellings
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_ecec)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_aged_care)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_health_services)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_light_vehicle_mech)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_it)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_accounting_bookkeeping)
+
     return(df_fixed)
 
 # test
@@ -143,10 +211,10 @@ def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
 df_fixed_interim = fix_fs_name_v(df = df, id = 'id')
 df_fixed_interim
 
-# Check for biggest errors
+# Check for common errors by looking at value_counts
 # %%
-errors = df_fixed_interim['s_fs_name_v_fixed'].value_counts()
-errors
+counts = df_fixed_interim['s_fs_name_v_fixed'].value_counts()
+counts
 
 
 # %%
@@ -154,10 +222,14 @@ df_fixed_interim[df_fixed_interim['s_fs_name_v_fixed'] == 'vce year 12']
 
 # Check if the level_description is in the fixed verbatim
 # %%
-# df_fixed_interim['level_description'] = df_fixed_interim['level_description'].astype('string')
-# df_fixed_interim.dtypes
-
+df_fixed_interim['level_description'] = df_fixed_interim['level_description'].astype('string')
+df_fixed_interim['s_fs_name_v_fixed'] = df_fixed_interim['s_fs_name_v_fixed'].astype('string')
 df_fixed_interim['level_desc_in_fixed'] = df_fixed_interim.apply(lambda x: x.level_description in x.s_fs_name_v_fixed, axis = 1)
-df_fixed_interim[df_fixed_interim['level_desc_in_fixed'] == False]
+temp = df_fixed_interim[df_fixed_interim['level_desc_in_fixed'] == False]['s_fs_name_v_fixed'].value_counts()
+
+# Harder to fix s_fs_lev 5, 8 and 9
+# Can fix 1, 2, 3, 4, 6, 7
+# %%
+df_fixed_interim[(df_fixed_interim['level_desc_in_fixed'] == False) & (df_fixed_interim['s_fs_lev'] == 3) & (df_fixed_interim['s_fs_name_v_fixed'] == 'age care')]
 
 # %%
