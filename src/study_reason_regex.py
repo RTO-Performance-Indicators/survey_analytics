@@ -27,30 +27,20 @@ s_fs_lev_dict = pd.DataFrame(s_fs_lev_dict)
 # df = df.filter(regex = "^s_fs", axis = 1)[~pd.isna(df["s_fs_name_v"])]
 # df = df[['s_fs_lev', 's_fs_name_v']]
 # df['id'] = range(1, len(df) + 1)
-# df = df[['id', 's_fs_lev', 's_fs_name_v']]
 # df = pd.merge(df, s_fs_lev_dict, how = 'left')
-# df.to_csv("../data/s_fs_name_v.csv")
+# df = df[['id', 's_fs_lev', 'level_description', 's_fs_name_v']]
+# df.to_csv("../data/s_fs_name_v.csv", index = False)
 
 # Function to get a data frame as an input,
 # and convert into a one-token-per-row format
 #%%
-def split_explode(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
-    # Get only required columns from Student Survey data,
-    # even when a whole data frame is provided
+def split_explode(df, id = 'SurveyResponseID',  colname = 's_fs_name_v'):
     df = df[[id, colname]]
     df['tokens'] = df[colname].apply(lambda x: nltk.word_tokenize(x))
-    df = df.explode('tokens')
+    tokenized_df = df.explode('tokens')
 
-    return(df)
+    return(tokenized_df)
 
-# test split_explode function
-#%%
-# split_explode(df = fs_v, id = 'id')
-# split_explode(df = df[['id', 's_fs_name_v']].dropna(), id = 'id')
-
-# Modify behaviour of word_tokenize to ignore parentheses
-#%%
-#nltk.tokenize.TreebankWordTokenizer.PARENS_BRACKETS = []
 
 # Function to take in a string variable, or pandas.Series
 # to return a cleaned vector of text
@@ -117,12 +107,6 @@ def string_subs(string):
 
     return(string)
 
-# test
-#%%
-# NOTE: map is faster than list comprehension. See:
-#       https://www.geeksforgeeks.org/python-map-vs-list-comprehension/
-
-
 #%%
 def fix_parentheses(string):
     string = re.sub(pattern = "\( ", repl = "(", string = string)
@@ -130,15 +114,12 @@ def fix_parentheses(string):
     
     return(string)
 
-# test
-# fix_parentheses("( registered nurse )")
-
 # Combined function
 # Take in a data frame, and a column name
 # %%
 def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
-    # Remove rows with s_fs_name_v == NaN
-    df = df.dropna()
+    
+    # df = df.dropna()
 
     # tokenize s_fs_name_v and convert to one-token-per-row data frame
     tokenized_df = split_explode(df = df, id = id, colname = colname)
@@ -152,13 +133,12 @@ def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     # Fix spaces before and after parentheses
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_parentheses)
 
+    # Join df_fixed and original df
+    df_fixed = pd.merge(df, df_fixed)
+
     return(df_fixed)
 
 # test
-temp = fix_fs_name_v(df = df, id = 'id')
-temp
-
-# fix real data
 # %%
 df_fixed_interim = fix_fs_name_v(df = df, id = 'id')
 df_fixed_interim
@@ -168,7 +148,16 @@ df_fixed_interim
 errors = df_fixed_interim['s_fs_name_v_fixed'].value_counts()
 errors
 
+
 # %%
 df_fixed_interim[df_fixed_interim['s_fs_name_v_fixed'] == 'vce year 12']
+
+# Check if the level_description is in the fixed verbatim
+# %%
+# df_fixed_interim['level_description'] = df_fixed_interim['level_description'].astype('string')
+# df_fixed_interim.dtypes
+
+df_fixed_interim['level_desc_in_fixed'] = df_fixed_interim.apply(lambda x: x.level_description in x.s_fs_name_v_fixed, axis = 1)
+df_fixed_interim[df_fixed_interim['level_desc_in_fixed'] == False]
 
 # %%
