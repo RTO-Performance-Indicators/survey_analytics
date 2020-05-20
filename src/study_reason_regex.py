@@ -209,6 +209,7 @@ def add_dip_details(row):
 def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     
     df = df.dropna()
+    # df = ~pd.isna(df[col])
 
     # tokenize s_fs_name_v and convert to one-token-per-row data frame
     tokenized_df = split_explode(df = df, id = id, colname = colname)
