@@ -203,6 +203,21 @@ def add_dip_details(row):
         return(row['s_fs_name_v_fixed'])
 
 
+#%%
+def diploma_of(string):
+    string = re.sub(r'(diploma) in ([a-z]*)' , r'\1 of \2', string = string)
+    return(string)
+
+diploma_of('diploma in x')
+
+#%%
+def certificate_in(string):
+    string = re.sub(r'(certificate [a-z]*) of ([a-z]*)' , r'\1 in \2', string = string)
+    return(string)
+
+certificate_in('certificate iii of x')
+
+
 # Combined function
 # Take in a data frame, and a column name
 # %%
