@@ -12,7 +12,7 @@ df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
 
 # %%
 #function to query measures or questions
-def Survey_query(survey,data,varnames, export_name=None, grouper=None, with_counts=0,supress_lowN=5,yearlast=False,rounded=False) :
+def Survey_query(survey,data,varnames, export_name=None, grouper=[], with_counts=0,supress_lowN=5,yearlast=False,rounded=False) :
     #set weight and year vars
     if survey == 'student':
         year_var = 'SurveyYear'
