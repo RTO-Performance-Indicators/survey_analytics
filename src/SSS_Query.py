@@ -4,15 +4,8 @@
 import pandas as pd
 import numpy as np
 import re
-filePath = 'S:/RTOPI/Both Surveys/All Final Datasets/Datasets - 2019/StudentSurveys.csv'
-#prelimPath = 'S:/RTOPI/Student Survey/Student Survey 2020/3. Data/5. Preliminary Files/2393 RTO preliminary data 1 main 2020-04-06.csv'
-savePath = 'S:\\RTOPI\\Data Requests\\RPIJ0175 Apprenticeship data - Julie Anderson\\unformatted data outputs\\'
-df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
-#prelim_df = pd.read_csv(prelimPath, encoding = 'ISO-8859-1')
-
-# %%
 #function to query measures or questions
-def Survey_query(survey,data,varnames, export_name=None, grouper=[], with_counts=0,supress_lowN=5,yearlast=False,rounded=False) :
+def Survey_query(survey,data,varnames, export_name=None, grouper=[], with_counts=0,supress_lowN=5,yearlast=False,rounded=False,unstack=False) :
     #set weight and year vars
     if survey == 'student':
         year_var = 'SurveyYear'
@@ -68,6 +61,8 @@ def Survey_query(survey,data,varnames, export_name=None, grouper=[], with_counts
     if rounded == True:
         for i in varnames:
             result_df[i] = [round(x*100,1) for x in result_df[i]]
+    if unstack == True:
+        result_df.unstack(year_var)        
     if export_name is not None:
         result_df.to_excel(savePath + export_name)
     return result_df
