@@ -117,6 +117,23 @@ def fix_parentheses(string):
     
     return(string)
 
+# Replaces the first function in the next cell
+#%%
+def fix_ecec(string):
+    string = re.sub(r'(diploma of |certificate [i]* in )childcare$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )child care$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )early childhood$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )early childhood education$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )early childhood and care$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )early childhood and education$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )early education$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )ecec$', r'\1early childhood education and care', string = string)
+    
+    return(string)
+# Test
+fix_ecec("diploma of early childhood and care")
+# fix_ecec("certificate iii in childcare")
+
 #%%
 def fix_ecec(string):
     ecec_misspellings = ['early childhood', 'childcare', 'child care', 'early childhood education',
@@ -257,6 +274,8 @@ def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     # Add certificate and diploma info
     df_fixed['s_fs_name_v_fixed'] = df_fixed.apply(lambda x: add_cert_details(x), axis = 1)
     df_fixed['s_fs_name_v_fixed'] = df_fixed.apply(lambda x: add_dip_details(x), axis = 1)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(diploma_of)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(certificate_in)
 
     return(df_fixed)
 
