@@ -305,4 +305,19 @@ temp = df_fixed_interim[df_fixed_interim['level_desc_in_fixed'] == False]['s_fs_
 # %%
 df_fixed_interim[(df_fixed_interim['level_desc_in_fixed'] == False) & (df_fixed_interim['s_fs_lev'] == 3) & (df_fixed_interim['s_fs_name_v_fixed'] == 'age care')]
 
+
+# If Diploma, but not followed by "on" or "in",
+# add the "in"
+# Negative match
+# %%
+text = 'diploma ecec'
+
+if re.match('diploma', text):
+    if re.match('diploma of', text):
+        print(text)
+    else:
+        text = re.sub('diploma', repl = 'diploma of', string = text)
+        print(text)
+
+
 # %%
