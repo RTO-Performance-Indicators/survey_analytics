@@ -117,6 +117,23 @@ def fix_parentheses(string):
     
     return(string)
 
+# Replaces the first function in the next cell
+#%%
+def fix_ecec(string):
+    string = re.sub(r'(diploma of |certificate [i]* in )childcare$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )child care$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )early childhood$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )early childhood education$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )early childhood and care$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )early childhood and education$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )early education$', r'\1early childhood education and care', string = string)
+    string = re.sub(r'(diploma of |certificate [i]* in )ecec$', r'\1early childhood education and care', string = string)
+    
+    return(string)
+# Test
+fix_ecec("diploma of early childhood and care")
+# fix_ecec("certificate iii in childcare")
+
 #%%
 def fix_ecec(string):
     ecec_misspellings = ['early childhood', 'childcare', 'child care', 'early childhood education',
@@ -203,6 +220,21 @@ def add_dip_details(row):
         return(row['s_fs_name_v_fixed'])
 
 
+#%%
+def diploma_of(string):
+    string = re.sub(r'(diploma) in ([a-z]*)' , r'\1 of \2', string = string)
+    return(string)
+
+diploma_of('diploma in x')
+
+#%%
+def certificate_in(string):
+    string = re.sub(r'(certificate [a-z]*) of ([a-z]*)' , r'\1 in \2', string = string)
+    return(string)
+
+certificate_in('certificate iii of x')
+
+
 # Combined function
 # Take in a data frame, and a column name
 # %%
@@ -242,6 +274,8 @@ def fix_fs_name_v(df, id = 'SurveyResponseID', colname = 's_fs_name_v'):
     # Add certificate and diploma info
     df_fixed['s_fs_name_v_fixed'] = df_fixed.apply(lambda x: add_cert_details(x), axis = 1)
     df_fixed['s_fs_name_v_fixed'] = df_fixed.apply(lambda x: add_dip_details(x), axis = 1)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(diploma_of)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(certificate_in)
 
     return(df_fixed)
 
@@ -270,5 +304,20 @@ temp = df_fixed_interim[df_fixed_interim['level_desc_in_fixed'] == False]['s_fs_
 # Can fix 1, 2, 3, 4, 6, 7
 # %%
 df_fixed_interim[(df_fixed_interim['level_desc_in_fixed'] == False) & (df_fixed_interim['s_fs_lev'] == 3) & (df_fixed_interim['s_fs_name_v_fixed'] == 'age care')]
+
+
+# If Diploma, but not followed by "on" or "in",
+# add the "in"
+# Negative match
+# %%
+text = 'diploma ecec'
+
+if re.match('diploma', text):
+    if re.match('diploma of', text):
+        print(text)
+    else:
+        text = re.sub('diploma', repl = 'diploma of', string = text)
+        print(text)
+
 
 # %%
