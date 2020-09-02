@@ -5,6 +5,7 @@ import numpy as np                  # Numerical Python
 # Load data
 filePath = 'S:/RTOPI/Both Surveys/All Final Datasets/Datasets - 2020/Output/StudentSurveys.csv'
 df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
+df = df[np.isin(df['SurveyYear'], ['S2019', 'S2020'])]
 
 # Select relevant columns
 df = df[['SurveyResponseID', 'SurveyYear', 'TOID', 'ClientIdentifier', 'CourseID','CourseCommencementDate', 's_fs_lev', 's_fs_name_v']]
@@ -275,16 +276,17 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_associate)
 
     # Join tokens together again
-    df_fixed = tokenized_df.groupby([id, col, 'level_description'])['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
-
+    group_cols = list(tokenized_df.columns.difference(['tokens', 'tokens2']))
+    df_fixed = tokenized_df.groupby(group_cols)['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
     
     # Join df_fixed and original df
-    df_fixed = pd.merge(dataframe, df_fixed)
+    # df_fixed = pd.merge(dataframe, df_fixed, how = 'left')
 
     # Flag whether qualification information is already in the fixed string
     # df_fixed['level_description'] = df_fixed['level_description'].astype('string')
     # df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].astype('str')
     df_fixed['level_desc_in_fixed'] = df_fixed.apply(lambda x: x.level_description in x.s_fs_name_v_fixed, axis = 1)
+
 
     # Add certificate and diploma info
     df_fixed['s_fs_name_v_fixed'] = df_fixed.apply(lambda x: add_cert_details(x), axis = 1)
@@ -307,8 +309,11 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     return(df_fixed)
 
 temp = fix_fs_name_v(dataframe = df, id = 'SurveyResponseID', col = 's_fs_name_v')
-temp = pd.merge(df, temp, how = 'left')
-temp
+temp = temp.drop(['level_description', 's_fs_lev', 's_fs_name_v', 'level_desc_in_fixed'], axis = 1)
+join_cols = list(temp.columns.difference(['s_fs_lev', 's_fs_name_v', 's_fs_name_v_fixed', 'level_desc_in_fixed', 'level_description']))
+temp2 = pd.merge(df, temp, how = 'left',
+                 left_on = join_cols, right_on = join_cols)
+temp2
 
 # Write to csv
-temp.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", index = False)
+temp2.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", index = False)
