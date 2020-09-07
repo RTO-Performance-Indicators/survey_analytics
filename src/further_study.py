@@ -15,15 +15,19 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
     
     data = data[~pd.isna(data[col])]
 
-    s_fs_lev_dict = {'s_fs_lev':          [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    s_fs_lev_dict = {'s_fs_lev':          [1, 2, 3, 4, 5, 6, 7, 10, 11],
                      'level_description': ['certificate i', 'certificate ii',
                                            'certificate iii', 'certificate iv',
                                            'vce or vcal', 'diploma',
-                                           'advanced diploma', 'bachelor', 
-                                           'higher than a degree']}
+                                           'advanced diploma', 'other', 
+                                           'bachelor']}
     s_fs_lev_dict = pd.DataFrame(s_fs_lev_dict)
 
+    # Add level description to data,
+    # and fill missing with 'Not available'
     data = pd.merge(data, s_fs_lev_dict, how = 'left')
+    data['level_description'] = data['level_description'].fillna('Not available')
+    
     data[col] = data[col].apply(lambda x: x.lower())
     data[col] = data[col].apply(lambda x: re.sub(r'\.', '', x))
 
@@ -36,8 +40,11 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
 
     return(tokenized_df)
 
+# This is the fix applied before tokens are pasted together again
 def fix_bachelor(string):
+    
     string = str(string)
+
     string = re.sub(pattern = "^bac[a-z]*", repl = "bachelor", string = string)
     string = re.sub(pattern = "^bahelor$", repl = "bachelor", string = string)
 
@@ -53,6 +60,17 @@ def fix_bachelor(string):
 
     string = re.sub(pattern = "^bachelors$", repl = "bachelor", string = string)
     string = re.sub(pattern = "^bachelor's$", repl = "bachelor", string = string)
+
+    return(string)
+
+# This is the fix for after tokens are pasted together again
+def fix_bachelor_2(string):
+    string = str(string)
+
+    corrected = r'bachelor of\1'
+
+    string = re.sub(r'bachelor degree of([ az19]*)', corrected, string = string)
+    string = re.sub(r'bachelor degree in([ az19]*)', corrected, string = string)
 
     return(string)
 
@@ -72,10 +90,10 @@ def fix_certificate(string):
 
         # Convert Arabic to Roman numbers
         # (mainly for certificates)
-        string = re.sub(pattern = "1", repl = "i", string = string)
-        string = re.sub(pattern = "2", repl = "ii", string = string)
-        string = re.sub(pattern = "3", repl = "iii", string = string)
-        string = re.sub(pattern = "4", repl = "iv", string = string)
+        string = re.sub(pattern = "^1$", repl = "i", string = string)
+        string = re.sub(pattern = "^2$", repl = "ii", string = string)
+        string = re.sub(pattern = "^3$", repl = "iii", string = string)
+        string = re.sub(pattern = "^4$", repl = "iv", string = string)
 
         # Convert English to Roman numbers
         # (mainly for certificates)
@@ -118,6 +136,61 @@ def fix_ampersand(string):
     
     return(string)
 
+def fix_accounting_bookkeeping(string):
+    string = str(string)
+
+    corrected = r'\1accounting and bookkeeping'
+    
+    string = re.sub(r'(diploma of |certificate [iv]* in )accountant and bookkeeping$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )accounting + bookkeeping$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and booking$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and bookkeeper$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and bookmaker$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )bookkeeping and accounting$', corrected, string = string)
+
+    return(string)
+
+def fix_aged_care(string):
+    string = str(string)
+
+    corrected =  r'\1aged care'
+
+    string = re.sub(r'(diploma of |certificate [iv]* in )agecare$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )agedcare$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )age care$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )aged care course$', corrected, string = string)
+    
+    return(string)
+
+def fix_build_const(string):
+    string = str(string)
+
+    corrected = r'\1building and construction'
+
+    string = re.sub(r'(diploma of |certificate [iv]* in )building construction', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )construction and building', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )building construction', corrected, string = string)
+
+    # Specific case
+    string = re.sub(r'(diploma of |certificate [iv]* in )building and construction building', r'\1building and construction (building)', string = string)
+
+    return(string)
+
+def fix_business(string):
+    string = str(string)
+    
+    replace = 'business'
+    
+    string = re.sub(pattern = 'businedd$', repl = replace, string = string)
+    string = re.sub(pattern = 'busineess$', repl = replace, string = string)
+    string = re.sub(pattern = 'businiss$', repl = replace, string = string)
+    string = re.sub(pattern = 'busines$', repl = replace, string = string)
+    string = re.sub(pattern = 'businesa$', repl = replace, string = string)
+    string = re.sub(pattern = 'businese$', repl = replace, string = string)
+    string = re.sub(pattern = 'businees$', repl = replace, string = string)
+
+    return(string)
+
 def fix_ecec(string):
     string = str(string)
     
@@ -135,16 +208,15 @@ def fix_ecec(string):
     
     return(string)
 
-def fix_aged_care(string):
+def fix_electrotech(string):
     string = str(string)
-
-    corrected =  r'\1aged care'
-
-    string = re.sub(r'(diploma of |certificate [iv]* in )agecare$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )agedcare$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )age care$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )aged care course$', corrected, string = string)
     
+    corrected = r'\1electrotechnology'
+
+    string = re.sub(r'(diploma of |certificate [iv]* in )electro technology$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )electro tech$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )electrotech$', corrected, string = string)
+
     return(string)
 
 def fix_health_services(string):
@@ -158,13 +230,16 @@ def fix_health_services(string):
 
     return(string)
 
-def fix_light_vehicle_mech(string):
+def fix_hospitality(string):
     string = str(string)
 
-    corrected = r'\1light vehicle mechanical technology'
-
-    string = re.sub(r'(diploma of |certificate [iv]* in )light vehicle mechanic$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )light vehicle mechanics$', corrected, string = string)
+    replace = 'hospitality'
+    
+    string = re.sub(pattern = 'hospiatily$', repl = replace, string = string)
+    string = re.sub(pattern = 'ospotality$', repl = replace, string = string)
+    string = re.sub(pattern = 'hosp$', repl = replace, string = string)
+    string = re.sub(pattern = 'hospotality$', repl = replace, string = string)
+    string = re.sub(pattern = 'hospitallity$', repl = replace, string = string)
 
     return(string)
 
@@ -175,27 +250,53 @@ def fix_it(string):
 
     return(string)
 
-def fix_accounting_bookkeeping(string):
+def fix_law(string):
     string = str(string)
 
-    corrected = r'\1accounting and bookkeeping'
-    
-    string = re.sub(r'(diploma of |certificate [iv]* in )accountant and bookkeeping$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )accounting + bookkeeping$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and booking$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and bookkeeper$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and bookmaker$', corrected, string = string)
+    string = re.sub(pattern = '^laws$', repl = 'law', string = string)
+    string = re.sub(pattern = '^lawz$', repl = 'law', string = string)
 
     return(string)
 
-def fix_electrotech(string):
+def fix_light_vehicle_mech(string):
+    string = str(string)
+
+    corrected = r'\1light vehicle mechanical technology'
+
+    string = re.sub(r'(diploma of |certificate [iv]* in )light vehicle mechanic$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )light vehicle mechanics$', corrected, string = string)
+
+    return(string)
+
+def fix_nursing(string):
+    string = str(string)
+
+    corrected =  r'\1nursing'
+
+    string = re.sub(r'(diploma of | certificate [iv]* i)nursng$', corrected, string = string)
+    string = re.sub(r'nursing diploma$', 'diploma of nursing', string = string)
+
+    return(string)
+
+def fix_science(string):
+    string = str(string)
+
+    replace = 'science'
+    
+    string = re.sub(pattern = '^sciense$', repl = replace, string = string)
+    string = re.sub(pattern = '^scienec$', repl = replace, string = string)
+    string = re.sub(pattern = '^ofscience$', repl = replace, string = string)
+    string = re.sub(pattern = '^science$,', repl = replace, string = string)
+    string = re.sub(pattern = '^sciense$', repl = replace, string = string)
+
+    return(string)
+
+def fix_training_assessment(string):
     string = str(string)
     
-    corrected = r'\1electrotechnology'
+    corrected = r'\1training and assessment'
 
-    string = re.sub(r'(diploma of |certificate [iv]* in )electro technology$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )electro tech$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )electrotech$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )tae$', corrected, string = string)
 
     return(string)
 
@@ -204,20 +305,6 @@ def fix_vet_nursing(string):
     
     string = re.sub(r'(diploma of |certificate [iv]* in )vet nursing$', r'\1veterinary nursing', string = string)
     
-    return(string)
-
-def fix_build_const(string):
-    string = str(string)
-
-    corrected = r'\1building and construction'
-
-    string = re.sub(r'(diploma of |certificate [iv]* in )building construction', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )construction and building', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )building construction', corrected, string = string)
-
-    # Specific case
-    string = re.sub(r'(diploma of |certificate [iv]* in )building and construction building', r'\1building and construction (building)', string = string)
-
     return(string)
 
 def add_cert_details(row):
@@ -275,9 +362,15 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_advanced)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_associate)
 
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_business)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_hospitality)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_law)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_science)
+
     # Join tokens together again
     group_cols = list(tokenized_df.columns.difference(['tokens', 'tokens2']))
     df_fixed = tokenized_df.groupby(group_cols)['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
+    # df_fixed = tokenized_df.groupby(['SurveyYear', 'SurveyResponseID'])['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
     
     # Join df_fixed and original df
     # df_fixed = pd.merge(dataframe, df_fixed, how = 'left')
@@ -299,11 +392,15 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_ecec)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_aged_care)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_health_services)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_nursing)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_light_vehicle_mech)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_it)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_accounting_bookkeeping)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_electrotech)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_training_assessment)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_build_const)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_bachelor_2)
+
 
 
     return(df_fixed)
@@ -313,7 +410,11 @@ temp = temp.drop(['level_description', 's_fs_lev', 's_fs_name_v', 'level_desc_in
 join_cols = list(temp.columns.difference(['s_fs_lev', 's_fs_name_v', 's_fs_name_v_fixed', 'level_desc_in_fixed', 'level_description']))
 temp2 = pd.merge(df, temp, how = 'left',
                  left_on = join_cols, right_on = join_cols)
-temp2
+
+temp = tokenize(df)
+temp[temp['tokens'].str.contains("comm")]['tokens'].unique()
+
+
 
 # Write to csv
 temp2.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", index = False)
