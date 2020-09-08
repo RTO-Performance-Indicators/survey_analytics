@@ -33,12 +33,16 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
 
     # tokenize
     # data['tokens'] = data[col].apply(lambda x: nltk.word_tokenize(x))
-    data['tokens'] = data[col].apply(lambda x: re.split(' |/|/.', x))
+    # data['tokens'] = data[col].apply(lambda x: re.split(' |/|/.', x))
+    data['tokens'] = data[col].apply(lambda x: re.split('[ .-]', x))
 
     # convert to narrow data
     tokenized_df = data.explode('tokens')
 
     return(tokenized_df)
+
+# re.split(' |/|/.|/-', 'hlt541115 - diploma of nursing')
+# re.split('[ .-]', 'hlt541115 - diploma of nursing')
 
 # This is the fix applied before tokens are pasted together again
 def fix_bachelor(string):
@@ -412,7 +416,7 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
 
     tokenized_df['tokens2'] = tokenized_df['tokens'].apply(fix_ampersand)
 
-    # Fix words
+    # Fix tokens
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_bachelor)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_certificate)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_diploma)
@@ -433,16 +437,19 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     # Join tokens together again
     group_cols = list(tokenized_df.columns.difference(['tokens', 'tokens2']))
     df_fixed = tokenized_df.groupby(group_cols)['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
-    # df_fixed = tokenized_df.groupby(['SurveyYear', 'SurveyResponseID'])['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
     
-    # Join df_fixed and original df
-    # df_fixed = pd.merge(dataframe, df_fixed, how = 'left')
+    # Extract course code sequence, which may have a space before the 'vic', i.e.: 22483 vic
+    df_fixed['verbatim_course_code'] = df_fixed['s_fs_name_v_fixed'].str.extract(r'([a-z]*[0-9]{4,6}[a-z]*[ ]*(?:(vic))*)')[0]
+    df_fixed['verbatim_course_code'] = df_fixed['verbatim_course_code'].str.replace(' ', '')
+
+    # Remove course code from verbatim, AFTER extraction
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].str.replace(r'([a-z]*[0-9]{4,6}[a-z]*[ ]*(?:(vic))*)', repl = "")
+
+    # Remove white space
+    df_fixed['s_fs_name_v_fixed']
 
     # Flag whether qualification information is already in the fixed string
-    # df_fixed['level_description'] = df_fixed['level_description'].astype('string')
-    # df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].astype('str')
     df_fixed['level_desc_in_fixed'] = df_fixed.apply(lambda x: x.level_description in x.s_fs_name_v_fixed, axis = 1)
-
 
     # Add certificate and diploma info
     df_fixed['s_fs_name_v_fixed'] = df_fixed.apply(lambda x: add_cert_details(x), axis = 1)
@@ -451,7 +458,10 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(bachelor_of)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(certificate_in)
 
-    # Fix common misspellings
+    # Remove level_desc_in_fixed column
+    df_fixed = df_fixed.drop(['level_desc_in_fixed'], axis = 1)
+
+    # Fix remaining errors after tokens are joined together
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_ecec)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_aged_care)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_health_services)
@@ -469,12 +479,12 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     return(df_fixed)
 
 temp = fix_fs_name_v(dataframe = df, id = 'SurveyResponseID', col = 's_fs_name_v')
-temp = temp.drop(['level_description', 's_fs_lev', 's_fs_name_v', 'level_desc_in_fixed'], axis = 1)
-join_cols = list(temp.columns.difference(['s_fs_lev', 's_fs_name_v', 's_fs_name_v_fixed', 'level_desc_in_fixed', 'level_description']))
+temp = temp.drop(['level_description', 's_fs_lev', 's_fs_name_v'], axis = 1)
+join_cols = list(temp.columns.difference(['s_fs_lev', 's_fs_name_v', 's_fs_name_v_fixed', 'level_description', 'verbatim_course_code']))
 temp2 = pd.merge(df, temp, how = 'left',
                  left_on = join_cols, right_on = join_cols)
 
-temp[temp['s_fs_name_v_fixed'].str.contains('[1-9]{4}')]['s_fs_name_v_fixed']
+temp2[~pd.isna(temp2['verbatim_course_code'])]['verbatim_course_code'].unique()
 
 temp = tokenize(df)
 temp[temp['tokens'].str.contains("engi")]['tokens'].unique()
