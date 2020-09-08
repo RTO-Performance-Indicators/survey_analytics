@@ -94,16 +94,19 @@ def fix_certificate(string):
         string = re.sub(pattern = "^2$", repl = "ii", string = string)
         string = re.sub(pattern = "^3$", repl = "iii", string = string)
         string = re.sub(pattern = "^4$", repl = "iv", string = string)
+        string = re.sub(pattern = "^11$", repl = "ii", string = string)
+        string = re.sub(pattern = "^111$", repl = "iii", string = string)
+        string = re.sub(pattern = "^1111$", repl = "iv", string = string)
 
         # Convert English to Roman numbers
         # (mainly for certificates)
-        string = re.sub(pattern = "one", repl = "i", string = string)
-        string = re.sub(pattern = "two", repl = "ii", string = string)
-        string = re.sub(pattern = "three", repl = "iii", string = string)
-        string = re.sub(pattern = "four", repl = "iv", string = string)
+        string = re.sub(pattern = "^one$", repl = "i", string = string)
+        string = re.sub(pattern = "^two$", repl = "ii", string = string)
+        string = re.sub(pattern = "^three$", repl = "iii", string = string)
+        string = re.sub(pattern = "^four$", repl = "iv", string = string)
 
         string = re.sub(pattern = "1v", repl = "iv", string = string)
-        string = re.sub(pattern = "iiii", repl = "iv", string = string)
+        string = re.sub(pattern = "^iiii$", repl = "iv", string = string)
 
         # Remaining ways of spelling 'certificate'
         string = re.sub(pattern = "^cert[a-z]*", repl = "certificate", string = string)
@@ -114,6 +117,7 @@ def fix_certificate(string):
 def fix_diploma(string):
     string = str(string)
     string = re.sub(pattern = "dip[a-z]*", repl = "diploma", string = string)
+    string = re.sub(pattern = "diaploma*", repl = "diploma", string = string)
 
     return(string)
 
@@ -134,6 +138,14 @@ def fix_ampersand(string):
     string = str(string)
     string = re.sub(pattern = "&", repl = "and", string = string)
     
+    return(string)
+
+def fix_parentheses(string):
+    string = str(string)
+
+    string = re.sub(pattern = r'([a-z]*)\(', repl = r'\1 (', string = string)
+    string = re.sub(pattern = r'\)([a-z]*)', repl = r') \1', string = string)
+
     return(string)
 
 def fix_accounting_bookkeeping(string):
@@ -204,6 +216,7 @@ def fix_ecec(string):
     string = re.sub(r'(diploma of |certificate [iv]* in )early childhood and education$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )early childhood care and education$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )early education$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )early education and care$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )ecec$', corrected, string = string)
     
     return(string)
@@ -216,6 +229,17 @@ def fix_electrotech(string):
     string = re.sub(r'(diploma of |certificate [iv]* in )electro technology$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )electro tech$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )electrotech$', corrected, string = string)
+
+    return(string)
+
+def fix_engineering(string):
+    string = str(string)
+
+    replace = 'engineering'
+
+    string = re.sub(pattern = 'engineeing', repl = replace, string = string)
+    string = re.sub(pattern = 'engineeing,', repl = replace, string = string)
+    string = re.sub(pattern = 'engineeering', repl = replace, string = string)
 
     return(string)
 
@@ -291,12 +315,44 @@ def fix_science(string):
 
     return(string)
 
+def fix_training(string):
+    string = str(string)
+
+    replace = 'training'
+
+    string = re.sub(pattern = 'trainning', repl = replace, string = string)
+    string = re.sub(pattern = 'trainng', repl = replace, string = string)
+
+    return(string)
+    
 def fix_training_assessment(string):
     string = str(string)
     
     corrected = r'\1training and assessment'
 
     string = re.sub(r'(diploma of |certificate [iv]* in )tae$', corrected, string = string)
+
+    return(string)
+
+def fix_tv(string):
+    string = str(string)
+    
+    corrected = 'television'
+
+    string = re.sub(r'^tv$', corrected, string = string)
+
+    return(string)
+
+def fix_university(string):
+    string = str(string)
+    replace = 'university'
+
+    string = re.sub(pattern = '^univesity$', repl = replace, string = string)
+    string = re.sub(pattern = '^univeraity$', repl = replace, string = string)
+    string = re.sub(pattern = '^univesities$', repl = replace, string = string)
+    string = re.sub(pattern = '^university:$', repl = replace, string = string)
+    string = re.sub(pattern = '^universityp$', repl = replace, string = string)
+    string = re.sub(pattern = '^university,$', repl = replace, string = string)
 
     return(string)
 
@@ -326,6 +382,7 @@ def bachelor_of(x):
 def diploma_of(x):
     # Change diploma IN to diploma OF
     string = re.sub(r'(diploma) in ([a-z]*)' , r'\1 of \2', str(x))
+    string = re.sub(r'(diploma) - ([a-z]*)' , r'\1 of \2', str(x))
 
     # Add OF after diploma if missing
     if re.match('diploma', string):
@@ -363,9 +420,15 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_associate)
 
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_business)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_engineering)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_hospitality)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_law)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_parentheses)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_science)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_training)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_tv)
+
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_university)
 
     # Join tokens together again
     group_cols = list(tokenized_df.columns.difference(['tokens', 'tokens2']))
@@ -411,8 +474,12 @@ join_cols = list(temp.columns.difference(['s_fs_lev', 's_fs_name_v', 's_fs_name_
 temp2 = pd.merge(df, temp, how = 'left',
                  left_on = join_cols, right_on = join_cols)
 
+temp[temp['s_fs_name_v_fixed'].str.contains('[1-9]{4}')]['s_fs_name_v_fixed']
+
 temp = tokenize(df)
-temp[temp['tokens'].str.contains("comm")]['tokens'].unique()
+temp[temp['tokens'].str.contains("engi")]['tokens'].unique()
+
+word_counts = temp['tokens'].value_counts()
 
 
 
