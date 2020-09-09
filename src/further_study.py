@@ -434,6 +434,9 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
 
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_university)
 
+    # Remove words
+    tokenized_df = tokenized_df[~np.isin(tokenized_df['tokens2'], ['online', '(online)'])]
+
     # Join tokens together again
     group_cols = list(tokenized_df.columns.difference(['tokens', 'tokens2']))
     df_fixed = tokenized_df.groupby(group_cols)['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
@@ -484,14 +487,15 @@ join_cols = list(temp.columns.difference(['s_fs_lev', 's_fs_name_v', 's_fs_name_
 temp2 = pd.merge(df, temp, how = 'left',
                  left_on = join_cols, right_on = join_cols)
 
+# Write to csv
+temp2.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", index = False)
+
 temp2[~pd.isna(temp2['verbatim_course_code'])]['verbatim_course_code'].unique()
 
 temp = tokenize(df)
-temp[temp['tokens'].str.contains("engi")]['tokens'].unique()
+temp[temp['tokens'].str.contains("online")]['tokens'].unique()
 
 word_counts = temp['tokens'].value_counts()
 
 
 
-# Write to csv
-temp2.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", index = False)
