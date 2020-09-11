@@ -1,3 +1,10 @@
+# The purpose of this script is to allocate Superseded Course Codes 
+# to further study verbatim from the Student Satisfaction Survey
+#
+# Note 1: This script should be run after extract_further_study.py has been run.
+#
+# Last updated: 11/09/2020
+
 import pandas as pd
 import numpy as np
 
@@ -6,7 +13,16 @@ fs = pd.read_csv('S:/RTOPI/Research projects/Further study/data/further_study.cs
 superseded = pd.read_excel('S:/TMIPU/Info Library/ISA Data & Information/Superseded Mappings/TGA Superseded Mappings - July 2020 - All courses.xlsx',
                             sheet_name = 'With 1 allocation only')
 
-superseded['course_title_lower'] = superseded['LatestCourseTitle'].str.lower()
+# Use only LatestCourse and LatestCourseTitle, as per Student Satisfaction Survey data
+superseded = superseded.rename(columns = {'LatestCourse': 'SupersededCourseID',
+                                          'LatestCourseTitle': 'SupersededCourseName'})
+superseded = superseded[['SupersededCourseID', 'SupersededCourseName']]
+superseded['SupersededCourseName'] = superseded['SupersededCourseName'].str.lower()
+superseded = superseded.drop_duplicates()
+
+superseded['SupersededCourseName'].value_counts()
+
+superseded.group_by(['SupersededCourseName'])
 
 # Merge fs with superseded course information
 merged = pd.merge(fs, superseded[['Course', 'LatestCourse', 'course_title_lower']],

@@ -20,18 +20,23 @@ df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
 df = df[np.isin(df['SurveyYear'], ['S2019', 'S2020'])]
 
 # Select relevant columns
-df = df[['SurveyResponseID', 'SurveyYear', 'TOID', 'ClientIdentifier', 'SupercededCourseID','CourseCommencementDate', 's_fs_lev', 's_fs_name_v']]
+df = df[['SurveyResponseID', 'SurveyYear', 'TOID', 'ClientIdentifier', 'CourseID', 'SupercededCourseID','CourseCommencementDate', 's_fs_lev', 's_fs_name_v']]
 
 # Functions
 def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
     
     data = data[~pd.isna(data[col])]
 
-    s_fs_lev_dict = {'s_fs_lev':          [1, 2, 3, 4, 5, 6, 7, 10, 11],
+    # Note: code frame changed between 2019 and 2020,
+    #       resulting in two levels translating to 'bachelor'
+    # Note: 11 is 'degree or higher', but majority are bachelor degrees,
+    #       so it is set to 'bachelor
+    s_fs_lev_dict = {'s_fs_lev': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
                      'level_description': ['certificate i', 'certificate ii',
                                            'certificate iii', 'certificate iv',
                                            'vce or vcal', 'diploma',
-                                           'advanced diploma', 'other', 
+                                           'advanced diploma', 'bachelor',
+                                           'masters', 'other', 
                                            'bachelor']}
     s_fs_lev_dict = pd.DataFrame(s_fs_lev_dict)
 
@@ -444,7 +449,9 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_university)
 
     # Remove words
-    tokenized_df = tokenized_df[~np.isin(tokenized_df['tokens2'], ['online', '(online)'])]
+    tokenized_df = tokenized_df[~np.isin(tokenized_df['tokens2'], ['online', '\\(online\\)'])]
+    tokenized_df = tokenized_df[~tokenized_df['tokens2'].str.contains('online')]
+
 
     # Join tokens together again
     group_cols = list(tokenized_df.columns.difference(['tokens', 'tokens2']))
@@ -453,12 +460,13 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     # Extract course code sequence, which may have a space before the 'vic', i.e.: 22483 vic
     df_fixed['verbatim_course_code'] = df_fixed['s_fs_name_v_fixed'].str.extract(r'([a-z]*[0-9]{4,6}[a-z]*[ ]*(?:(vic))*)')[0]
     df_fixed['verbatim_course_code'] = df_fixed['verbatim_course_code'].str.replace(' ', '')
+    df_fixed['verbatim_course_code'] = df_fixed['verbatim_course_code'].str.upper()
 
     # Remove course code from verbatim, AFTER extraction
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].str.replace(r'([a-z]*[0-9]{4,6}[a-z]*[ ]*(?:(vic))*)', repl = "")
 
     # Remove white space
-    df_fixed['s_fs_name_v_fixed']
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].str.strip()
 
     # Flag whether qualification information is already in the fixed string
     df_fixed['level_desc_in_fixed'] = df_fixed.apply(lambda x: x.level_description in x.s_fs_name_v_fixed, axis = 1)
@@ -504,9 +512,9 @@ temp2.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", 
 temp2[~pd.isna(temp2['verbatim_course_code'])]['verbatim_course_code'].unique()
 
 temp = tokenize(df)
-temp[temp['tokens'].str.contains("tae")]['tokens'].unique()
+temp[temp['tokens'].str.contains("phd")]['tokens'].unique()
 
 word_counts = temp['tokens'].value_counts()
 
-
+tokenized_df[tokenized_df['tokens'].str.contains("online")]['tokens'].unique()
 
