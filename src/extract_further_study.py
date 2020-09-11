@@ -1,3 +1,15 @@
+# The purpose of this script is to extract the further study course responses  
+# from the Student Satisfaction survey
+# 
+# Note 1: This script can be run at any point in time as improvements are
+#         made to the functions below.
+#
+# Note 2: The script should be updated to reflect the Survey Years
+#
+# Note 3: Changes to this script should be managed using GIT and GitHub
+#
+# Last updated: 11/09/2020
+
 import re                           # Regular Expressions
 import pandas as pd                 # Python Data Analysis Library
 import numpy as np                  # Numerical Python
@@ -8,7 +20,7 @@ df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
 df = df[np.isin(df['SurveyYear'], ['S2019', 'S2020'])]
 
 # Select relevant columns
-df = df[['SurveyResponseID', 'SurveyYear', 'TOID', 'ClientIdentifier', 'CourseID','CourseCommencementDate', 's_fs_lev', 's_fs_name_v']]
+df = df[['SurveyResponseID', 'SurveyYear', 'TOID', 'ClientIdentifier', 'SupercededCourseID','CourseCommencementDate', 's_fs_lev', 's_fs_name_v']]
 
 # Functions
 def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
@@ -40,9 +52,6 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
     tokenized_df = data.explode('tokens')
 
     return(tokenized_df)
-
-# re.split(' |/|/.|/-', 'hlt541115 - diploma of nursing')
-# re.split('[ .-]', 'hlt541115 - diploma of nursing')
 
 # This is the fix applied before tokens are pasted together again
 def fix_bachelor(string):
@@ -481,6 +490,7 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
 
     return(df_fixed)
 
+# Fun the function above, 'fix_fs_name_v' on the data frame
 temp = fix_fs_name_v(dataframe = df, id = 'SurveyResponseID', col = 's_fs_name_v')
 temp = temp.drop(['level_description', 's_fs_lev', 's_fs_name_v'], axis = 1)
 join_cols = list(temp.columns.difference(['s_fs_lev', 's_fs_name_v', 's_fs_name_v_fixed', 'level_description', 'verbatim_course_code']))
@@ -490,10 +500,11 @@ temp2 = pd.merge(df, temp, how = 'left',
 # Write to csv
 temp2.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", index = False)
 
+# Exploring the data for more improvement opportunities and bugs
 temp2[~pd.isna(temp2['verbatim_course_code'])]['verbatim_course_code'].unique()
 
 temp = tokenize(df)
-temp[temp['tokens'].str.contains("online")]['tokens'].unique()
+temp[temp['tokens'].str.contains("tae")]['tokens'].unique()
 
 word_counts = temp['tokens'].value_counts()
 
