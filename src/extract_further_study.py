@@ -59,25 +59,29 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
     return(tokenized_df)
 
 # This is the fix applied before tokens are pasted together again
-def fix_bachelor(string):
+def fix_bachelor_token(string):
     
     string = str(string)
 
-    string = re.sub(pattern = "^bac[a-z]*", repl = "bachelor", string = string)
-    string = re.sub(pattern = "^bahelor$", repl = "bachelor", string = string)
+    corrected = 'bachelor'
 
-    string = re.sub(pattern = "^batch$", repl = "bachelor", string = string)
-    string = re.sub(pattern = "^batchler$", repl = "bachelor", string = string)
+    string = re.sub(pattern = "^achelor$", repl = corrected, string = string)
 
-    string = re.sub(pattern = "^bauchor$", repl = "bachelor", string = string)
-    string = re.sub(pattern = "^bechalor$", repl = "bachelor", string = string)
-    string = re.sub(pattern = "^bechlor$", repl = "bachelor", string = string)
-    string = re.sub(pattern = "^becholar$", repl = "bachelor", string = string)
+    string = re.sub(pattern = "^bac[a-z]*", repl = corrected, string = string)
+    string = re.sub(pattern = "^bahelor$", repl = corrected, string = string)
 
-    string = re.sub(pattern = "^bchelor$", repl = "bachelor", string = string)
+    string = re.sub(pattern = "^batch$", repl = corrected, string = string)
+    string = re.sub(pattern = "^batchler$", repl = corrected, string = string)
 
-    string = re.sub(pattern = "^bachelors$", repl = "bachelor", string = string)
-    string = re.sub(pattern = "^bachelor's$", repl = "bachelor", string = string)
+    string = re.sub(pattern = "^bauchor$", repl = corrected, string = string)
+    string = re.sub(pattern = "^bechalor$", repl = corrected, string = string)
+    string = re.sub(pattern = "^bechlor$", repl = corrected, string = string)
+    string = re.sub(pattern = "^becholar$", repl = corrected, string = string)
+
+    string = re.sub(pattern = "^bchelor$", repl = corrected, string = string)
+
+    string = re.sub(pattern = "^bachelors$", repl = corrected, string = string)
+    string = re.sub(pattern = "^bachelor's$", repl = corrected, string = string)
 
     return(string)
 
@@ -85,12 +89,19 @@ def fix_bachelor(string):
 def fix_bachelor_2(string):
     string = str(string)
 
-    corrected = r'bachelor of\1'
+    corrected = r'bachelor of \1'
 
-    string = re.sub(r'bachelor degree of([ az19]*)', corrected, string = string)
-    string = re.sub(r'bachelor degree in([ az19]*)', corrected, string = string)
+    string = re.sub(r'bachelor degree of ([ az19]*)', corrected, string = string)
+    string = re.sub(r'bachelor degree in ([ az19]*)', corrected, string = string)
+
+    string = re.sub(r'^degree in([ az19]*)', repl = corrected, string = string)
+    string = re.sub(r'^degree of([ az19]*)', repl = corrected, string = string)
+
+    string = re.sub(r'([a-z ]*) degree$', repl = corrected, string = string)
 
     return(string)
+
+# fix_bachelor_2('associate degree in graphic design')
 
 def fix_certificate(string):
     string = str(string)
@@ -136,7 +147,7 @@ def fix_diploma(string):
     string = str(string)
     string = re.sub(pattern = "dip[a-z]*", repl = "diploma", string = string)
     string = re.sub(pattern = "diaploma*", repl = "diploma", string = string)
-
+    
     return(string)
 
 def fix_advanced(string):
@@ -146,11 +157,30 @@ def fix_advanced(string):
     else:
         return(string)
 
-def fix_associate(string):
+def fix_associate_token(string):
     string = str(string)
-    string = re.sub(pattern = '^asso[a-z]', repl = 'associate', string = string)
+    string = re.sub(pattern = '^associates$', repl = 'associate', string = string)
+    string = re.sub(pattern = '^associated$', repl = 'associate', string = string)
 
     return(string)
+
+def fix_associate_degree(string):
+    string = str(string)
+
+    # Change associate degree IN to associate degree OF
+    string = re.sub(r'(associate degree) in ([a-z]*)' , r'\1 of \2', string)
+
+    # Add OF after diploma if missing
+    # if re.match('diploma', string):
+        # if re.match('diploma of', string = string):
+            # string = string
+        # else:
+            # string = re.sub('diploma', repl = 'diploma of', string = string)
+
+    return(string)
+
+# fix_associate_degree('associate degree in graphic design')
+
 
 def fix_ampersand(string):
     string = str(string)
@@ -173,12 +203,16 @@ def fix_accounting_bookkeeping(string):
     
     string = re.sub(r'(diploma of |certificate [iv]* in )accountant and bookkeeping$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )accounting + bookkeeping$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and booking$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and booking ([ a-z]*)', repl = r'\1accounting and bookkeeping \2', string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )accounting and bookkeeper$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )accounting and bookmaker$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )bookkeeping and accounting$', corrected, string = string)
 
+    string = re.sub(r'^accounting and booking ([ az]*)', repl = r'accounting and bookkeeping \1', string = string)
+
     return(string)
+
+# fix_accounting_bookkeeping('accounting and booking certificate iv')
 
 def fix_aged_care(string):
     string = str(string)
@@ -401,6 +435,7 @@ def diploma_of(x):
     # Change diploma IN to diploma OF
     string = re.sub(r'(diploma) in ([a-z]*)' , r'\1 of \2', str(x))
     string = re.sub(r'(diploma) - ([a-z]*)' , r'\1 of \2', str(x))
+    string = re.sub(r'(diploma of [a-z ]*) degree', r'\1', str(x))
 
     # Add OF after diploma if missing
     if re.match('diploma', string):
@@ -431,11 +466,11 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     tokenized_df['tokens2'] = tokenized_df['tokens'].apply(fix_ampersand)
 
     # Fix tokens
-    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_bachelor)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_bachelor_token)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_certificate)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_diploma)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_advanced)
-    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_associate)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_associate_token)
 
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_business)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_engineering)
@@ -493,7 +528,7 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_training_assessment)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_build_const)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_bachelor_2)
-
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_associate_degree)
 
 
     return(df_fixed)
@@ -512,7 +547,7 @@ temp2.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", 
 temp2[~pd.isna(temp2['verbatim_course_code'])]['verbatim_course_code'].unique()
 
 temp = tokenize(df)
-temp[temp['tokens'].str.contains("phd")]['tokens'].unique()
+temp[temp['tokens'].str.contains("assoc")]['tokens'].unique()
 
 word_counts = temp['tokens'].value_counts()
 
