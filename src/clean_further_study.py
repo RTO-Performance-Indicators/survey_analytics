@@ -536,18 +536,38 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
 
     return(df_fixed)
 
-# Fun the function above, 'fix_fs_name_v' on the data frame
-temp = fix_fs_name_v(dataframe = df, id = 'SurveyResponseID', col = 's_fs_name_v')
-temp = temp.drop(['level_description', 's_fs_lev', 's_fs_name_v'], axis = 1)
-join_cols = list(temp.columns.difference(['s_fs_lev', 's_fs_name_v', 's_fs_name_v_fixed', 'level_description', 'verbatim_course_code']))
-temp2 = pd.merge(df, temp, how = 'left',
-                 left_on = join_cols, right_on = join_cols)
+# SECTION 1 - CLEAN S_FS_NAME_V
+fs = fix_fs_name_v(dataframe = df, id = 'SurveyResponseID', col = 's_fs_name_v')
+fs = fs.drop(['level_description', 's_fs_lev', 's_fs_name_v'], axis = 1)
+join_cols = list(fs.columns.difference(['s_fs_lev', 's_fs_name_v', 's_fs_name_v_fixed', 'level_description', 'verbatim_course_code']))
+fs = pd.merge(df, fs, how = 'left', left_on = join_cols, right_on = join_cols)
 
-# Write to csv
-temp2.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", index = False)
+# SECTION 2 - REPLACE VERBATIM USING COURSE CODES
+
+# Load and superseded course concordances
+superseded = pd.read_excel('S:/TMIPU/Info Library/ISA Data & Information/Superseded Mappings/TGA Superseded Mappings - July 2020 - All courses.xlsx',
+                            sheet_name = 'With 1 allocation only')
+superseded['LatestCourseTitle'] = superseded['LatestCourseTitle'].str.lower()
+
+# Not all extracted verbatim course codes are valid course codes, such as 2019 and 2020
+# Remove years as valid superseded course codes
+superseded = superseded[~np.isin(superseded['Course'], ['2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023'])]
+
+# Merge superseded course title to fs data frame
+fs_merged = pd.merge(fs, superseded[['Course', 'LatestCourseTitle']], left_on = ['verbatim_course_code'], right_on = ['Course'], how = 'left')
+
+# Now replace s_fs_name_v_fixed if LatestCourseTitle is not na
+fs_merged['s_fs_name_v_fixed'] = fs_merged.apply(lambda x: x['LatestCourseTitle'] if pd.isna(x['LatestCourseTitle']) == False else x['s_fs_name_v_fixed'], axis = 1)
+fs_merged = fs_merged.drop(['verbatim_course_code', 'Course', 'LatestCourseTitle'], axis = 1)
+
+
+# FINAL SECTION - Write to csv
+fs_merged.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", index = False)
 
 # Exploring the data for more improvement opportunities and bugs
-temp2[~pd.isna(temp2['verbatim_course_code'])]['verbatim_course_code'].unique()
+fs_merged[~pd.isna(fs_merged['verbatim_course_code'])]['verbatim_course_code'].unique()
+
+fs_merged['verbatim_course_code'].value_counts().head(20)
 
 temp = tokenize(df)
 temp[temp['tokens'].str.contains("assoc")]['tokens'].unique()
