@@ -8,7 +8,7 @@
 #
 # Note 3: Changes to this script should be managed using GIT and GitHub
 #
-# Last updated: 11/09/2020
+# Last updated: 21/09/2020
 
 import re                           # Regular Expressions
 import pandas as pd                 # Python Data Analysis Library
@@ -496,6 +496,9 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     df_fixed['verbatim_course_code'] = df_fixed['s_fs_name_v_fixed'].str.extract(r'([a-z]*[0-9]{4,6}[a-z]*[ ]*(?:(vic))*)')[0]
     df_fixed['verbatim_course_code'] = df_fixed['verbatim_course_code'].str.replace(' ', '')
     df_fixed['verbatim_course_code'] = df_fixed['verbatim_course_code'].str.upper()
+    
+    # Replace 40116 with TAE40116 (a common occurence)
+    df_fixed['verbatim_course_code'] = df_fixed.apply(lambda x: 'TAE40116' if x['verbatim_course_code'] == '40116' else x['verbatim_course_code'], axis = 1)
 
     # Remove course code from verbatim, AFTER extraction
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].str.replace(r'([a-z]*[0-9]{4,6}[a-z]*[ ]*(?:(vic))*)', repl = "")
@@ -548,8 +551,3 @@ temp2[~pd.isna(temp2['verbatim_course_code'])]['verbatim_course_code'].unique()
 
 temp = tokenize(df)
 temp[temp['tokens'].str.contains("assoc")]['tokens'].unique()
-
-word_counts = temp['tokens'].value_counts()
-
-tokenized_df[tokenized_df['tokens'].str.contains("online")]['tokens'].unique()
-
