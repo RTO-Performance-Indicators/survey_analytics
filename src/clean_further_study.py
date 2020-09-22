@@ -538,8 +538,8 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
 
 # SECTION 1 - CLEAN S_FS_NAME_V
 fs = fix_fs_name_v(dataframe = df, id = 'SurveyResponseID', col = 's_fs_name_v')
-fs = fs.drop(['level_description', 's_fs_lev', 's_fs_name_v'], axis = 1)
-join_cols = list(fs.columns.difference(['s_fs_lev', 's_fs_name_v', 's_fs_name_v_fixed', 'level_description', 'verbatim_course_code']))
+fs = fs.drop(['s_fs_lev', 's_fs_name_v'], axis = 1)
+join_cols = list(fs.columns.difference(['level_description', 's_fs_lev', 's_fs_name_v', 's_fs_name_v_fixed', 'level_description', 'verbatim_course_code']))
 fs = pd.merge(df, fs, how = 'left', left_on = join_cols, right_on = join_cols)
 
 # SECTION 2 - REPLACE VERBATIM USING COURSE CODES
