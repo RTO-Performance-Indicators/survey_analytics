@@ -10,10 +10,11 @@
 #
 # Note 3: Changes to this script should be managed using GIT and GitHub
 #
-# Last updated: 22/09/2020
+# Last updated: 25/09/2020
 
 import pandas as pd
 import numpy as np 
+import Levenshtein
 from datetime import datetime
 
 # Load data
@@ -21,9 +22,9 @@ fs = pd.read_csv('S:/RTOPI/Research projects/Further study/data/further_study.cs
 enrolments = pd.read_csv('S:/RTOPI/Research projects/Further study/data/course_enrolments.csv', encoding = 'ISO-8859-1')
 superseded = pd.read_excel('S:/TMIPU/Info Library/ISA Data & Information/Superseded Mappings/TGA Superseded Mappings - July 2020 - All courses.xlsx', sheet_name = 'With 1 allocation only')
 
-# fs['fs_source'] = 'survey'
 enrolments = enrolments.drop('EnrolmentStatus', axis = 1)
 enrolments = enrolments.rename(columns = {'Description': 'level_description'})
+enrolments['level_description'] = enrolments['level_description'].str.lower()
 superseded = superseded[['Course', 'LatestCourseTitle']]
 
 # Conform datetimes to enable joins
@@ -63,36 +64,59 @@ merged.fs_source.value_counts()
 # TODO: Some course names are still missing despite valid CourseID_y
 merged[merged['fs_source'] == '']
 
-# TODO: fs_name_v is still valid even if it's not in SVTS, such as Bachelor degrees
-#       Need to identify these, and create a new observation for them
-merged[merged['s_fs_name_v_fixed'] != merged['CourseName']]
+# TODO: Some coures names are also very similar between survey and svts,
+#       but because they are different, they are recognised as a separate course,
+#       and listed as source = survey (survey_valid code below)
+merged['similarity'] = similar.apply(lambda x: Levenshtein.distance(x['s_fs_name_v_fixed'], x['CourseName']), axis = 1)
+merged.sort_values(['similarity'])
+
+# Lots of verbatim are incredibly similar to the svts course name,
+# but some may legitimately be different, particularly the cert ii and cert iii courses
+# where people have gone on to do the cert ii, then subsequently the cert iii
+merged[merged['similarity'] == 1][['SLK', 's_fs_name_v_fixed', 'CourseName']]
+# Meanwhile, sometimes the cert ii doesn't exist, and it must have been the cert iii that
+# studied.
+merged[merged['SLK'] == 339925402][['SLK', 's_fs_name_v_fixed', 'CourseName']]
+merged[merged['SLK'] == 249640142][['SLK', 's_fs_name_v_fixed', 'CourseName']]
+
+# So, check whether the course name is legitimate
+merged['valid_course_name'] = np.isin(merged['s_fs_name_v_fixed'], superseded['LatestCourseTitle'])
+merged.valid_course_name.value_counts()
+
+# And because of the imperfect match, the fs_source has been allocated to 'svts'
+merged[merged.similarity == 1].fs_source.value_counts()
+
+
+
+# fs_name_v is still valid even if it's not in SVTS, such as Bachelor degrees
+# Need to identify these, and create a new observation for them
+survey_valid = merged[(merged['s_fs_name_v_fixed'] != merged['CourseName']) & (pd.notna(merged['s_fs_name_v_fixed']))]
+survey_valid['fs_source'] = 'survey'
+survey_valid = survey_valid[['SurveyResponseID', 'SurveyYear', 'TOID_x', 'ClientIdentifier_x',
+                             'CourseID_x', 'SupercededCourseID', 'CourseCommencementDate_x',
+                             's_fs_name_v_fixed', 'level_description_x', 'fs_source']]
+survey_valid = survey_valid.rename(columns = {'TOID_x': 'TOID',
+                                              'ClientIdentifier_x': 'ClientIdentifier',
+                                              'CourseID_x': 'CourseID',
+                                              'CourseCommencementDate_x': 'CourseCommencementDate',
+                                              's_fs_name_v_fixed': 'fs_course_name',
+                                              'level_description_x': 'level_description'})
 
 # Now use course name based on fs_source
-merged['fs_course_name'] = merged.apply(lambda x: x['s_fs_name_v_fixed'] if x['fs_source'] == 'survey' else x['CourseName'], axis = 1)
+svts_valid = merged[merged['fs_source'] != 'survey']
+svts_valid = svts_valid[['SurveyResponseID', 'SurveyYear', 'TOID_x', 'ClientIdentifier_x',
+                             'CourseID_x', 'SupercededCourseID', 'CourseCommencementDate_x',
+                             'CourseName', 'level_description_y', 'fs_source']]
+svts_valid = svts_valid.rename(columns = {'TOID_x': 'TOID',
+                                         'ClientIdentifier_x': 'ClientIdentifier',
+                                         'CourseID_x': 'CourseID',
+                                         'CourseCommencementDate_x': 'CourseCommencementDate',
+                                         'CourseName': 'fs_course_name',
+                                         'level_description_y': 'level_description'})
 
-merged.head()
+# Row bind survey_valid and svts_valid
+further_study_df = survey_valid.append(svts_valid)
 
-# TODO: Select the correct level description
+further_study_df
 
-# Tidy up the columns (drop and rename)
-merged = merged.drop(['TOID_y', 'ClientIdentifier_y', 'CourseID_y', 'CourseName', 's_fs_name_v_fixed'], axis = 1)
-merged = merged.rename(columns = {'TOID_x': 'TOID', 
-                                  'ClientIdentifier_x': 'ClientIdentifier', 
-                                  'CourseID_x': 'CourseID',
-                                  'CourseCommencementDate_x': 'CourseCommencementDate',
-                                  'CourseCommencementDate_y': 'CourseCommencementDate_fs'})
-merged['fs_source'] = 'SVTS'
-
-enrolments.shape
-temp.shape
-fs.shape
-merged.shape
-merged.head()
-
-sum(pd.isna(fs['SLK']))
-
-# There are still more SLKs in enrolments than in fs
-len(enrolments.SLK.unique())
-len(fs.SLK.unique())
-len(temp.SLK.unique())
-len(merged.SLK.unique())
+# Write to csv

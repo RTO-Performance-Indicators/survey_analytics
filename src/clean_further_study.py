@@ -46,7 +46,7 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
     data['level_description'] = data['level_description'].fillna('Not available')
     
     data[col] = data[col].apply(lambda x: x.lower())
-    data[col] = data[col].apply(lambda x: re.sub(r'\.', '', x))
+    data[col] = data[col].apply(lambda x: re.sub(r'[.,:]', '', x))
 
     # tokenize
     # data['tokens'] = data[col].apply(lambda x: nltk.word_tokenize(x))
@@ -57,6 +57,8 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
     tokenized_df = data.explode('tokens')
 
     return(tokenized_df)
+
+# re.sub('[.,]', '', 'cert. 4, in x')
 
 # This is the fix applied before tokens are pasted together again
 def fix_bachelor_token(string):
@@ -140,6 +142,16 @@ def fix_certificate(string):
         # Remaining ways of spelling 'certificate'
         string = re.sub(pattern = "^cert[a-z]*", repl = "certificate", string = string)
         string = re.sub(pattern = "^cer$", repl = "certificate", string = string)
+
+        # lack of spaces
+        string = re.sub(pattern = '4in', repl = 'iv in', string = string)
+        string = re.sub(pattern = '3in', repl = 'iii in', string = string)
+        string = re.sub(pattern = '2in', repl = 'ii in', string = string)
+        string = re.sub(pattern = '1in', repl = 'i in', string = string)
+        string = re.sub(pattern = '4of', repl = 'iv in', string = string)
+        string = re.sub(pattern = '3of', repl = 'iii in', string = string)
+        string = re.sub(pattern = '2of', repl = 'ii in', string = string)
+        string = re.sub(pattern = '1of', repl = 'i in', string = string)
 
     return(string)
 
@@ -255,6 +267,20 @@ def fix_business(string):
 
     return(string)
 
+def fix_community(string):
+    string = str(string)
+
+    replace = 'community'
+
+    string = re.sub(pattern = '^communityservices*', repl = 'community services', string = string)
+    string = re.sub(pattern = '^communiy', repl = 'community', string = string)
+    string = re.sub(pattern = '^communut[a-z1-9]*', repl = 'community', string = string)
+    string = re.sub(pattern = '^communit[a-z1-9]*', repl = 'community', string = string)
+    string = re.sub(pattern = '^communt[a-z1-9]*', repl = 'community', string = string)
+
+
+    return(string)
+
 def fix_ecec(string):
     string = str(string)
     
@@ -262,13 +288,8 @@ def fix_ecec(string):
 
     string = re.sub(r'(diploma of |certificate [iv]* in )childcare$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )child care$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )early childhood$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )early childhood education$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )early childhood and care$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )early childhood and education$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )early childhood care and education$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )early education$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )early education and care$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )early childhood[ a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )early education[ a-z]*', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )ecec$', corrected, string = string)
     
     return(string)
@@ -427,15 +448,28 @@ def add_dip_details(row):
     else:
         return(row['s_fs_name_v_fixed'])
 
+def add_spaces(string):
+    string = str(string)
+
+    string = re.sub(r'([1-4])([a-z]*)', repl = r'\1 \2', string = string)
+    string = re.sub(r'([a-z])([1-4])', repl = r'\1 \2', string = string)
+
+    string = re.sub(pattern = "4", repl = "iv", string = string)
+    string = re.sub(pattern = "3", repl = "iii", string = string)
+    string = re.sub(pattern = "2", repl = "ii", string = string)
+    string = re.sub(pattern = "1", repl = "i", string = string)
+
+    return(string)
+
 def bachelor_of(x):
     string = re.sub(r'(bachelor) in ([a-z]*)' , r'\1 of \2', str(x))
     return(string)
 
 def diploma_of(x):
     # Change diploma IN to diploma OF
-    string = re.sub(r'(diploma) in ([a-z]*)' , r'\1 of \2', str(x))
-    string = re.sub(r'(diploma) - ([a-z]*)' , r'\1 of \2', str(x))
-    string = re.sub(r'(diploma of [a-z ]*) degree', r'\1', str(x))
+    string = re.sub(r'(diploma) in ([a-z ]*)' , r'\1 of \2', str(x))
+    string = re.sub(r'(diploma) - ([a-z ]*)' , r'\1 of \2', string)
+    string = re.sub(r'(diploma of [a-z ]*) degree', r'\1', string)
 
     # Add OF after diploma if missing
     if re.match('diploma', string):
@@ -459,6 +493,14 @@ def certificate_in(x):
 
     return(string)
 
+def remove_meaningless_names(x):
+    meaningless_name = bool(re.search("^(certificate|diploma) [ iv]*(in|of)$", x))
+
+    if meaningless_name == True:
+        return('')
+    else:
+        return(x)
+
 def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     # Tokenize s_fs_name_v column
     tokenized_df = tokenize(dataframe, id = id, col = col)
@@ -472,7 +514,10 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_advanced)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_associate_token)
 
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(add_spaces)
+
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_business)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_community)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_engineering)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_hospitality)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_law)
@@ -483,11 +528,13 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
 
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_university)
 
+
+
     # Remove words
     tokenized_df = tokenized_df[~np.isin(tokenized_df['tokens2'], ['online', '\\(online\\)'])]
     tokenized_df = tokenized_df[~tokenized_df['tokens2'].str.contains('online')]
 
-
+    
     # Join tokens together again
     group_cols = list(tokenized_df.columns.difference(['tokens', 'tokens2']))
     df_fixed = tokenized_df.groupby(group_cols)['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
@@ -533,6 +580,7 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_bachelor_2)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_associate_degree)
 
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(remove_meaningless_names)
 
     return(df_fixed)
 
@@ -570,4 +618,9 @@ fs_merged[~pd.isna(fs_merged['verbatim_course_code'])]['verbatim_course_code'].u
 fs_merged['verbatim_course_code'].value_counts().head(20)
 
 temp = tokenize(df)
-temp[temp['tokens'].str.contains("assoc")]['tokens'].unique()
+tokenized_df[tokenized_df['tokens2'].str.contains("commun")]['tokens2'].value_counts()
+
+fs[fs['s_fs_name_v_fixed'].str.contains('^certificate [iv]* in$', regex = True)]
+fs[fs['s_fs_name_v_fixed'].str.contains('^', regex = True)]
+
+fs[fs['s_fs_name_v_fixed'].str.contains('diploma of early childhood')]['s_fs_name_v_fixed'].value_counts().head(6)
