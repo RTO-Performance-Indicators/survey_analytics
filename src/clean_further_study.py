@@ -20,7 +20,7 @@ df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
 df = df[np.isin(df['SurveyYear'], ['S2019', 'S2020'])]
 
 # Select relevant columns
-df = df[['SurveyResponseID', 'SurveyYear', 'TOID', 'ClientIdentifier', 'CourseID', 'SupercededCourseID','CourseCommencementDate', 's_fs_lev', 's_fs_name_v']]
+df = df[['SurveyResponseID', 'SurveyYear', 'TOID', 'ClientIdentifier', 'CourseID', 'SupercededCourseID', 'CourseLevelDesc', 'CourseCommencementDate', 's_fs_lev', 's_fs_name_v']]
 
 # Functions
 def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
@@ -46,19 +46,17 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
     data['level_description'] = data['level_description'].fillna('Not available')
     
     data[col] = data[col].apply(lambda x: x.lower())
-    data[col] = data[col].apply(lambda x: re.sub(r'[.,:]', '', x))
+    data[col] = data[col].apply(lambda x: re.sub(r'[.,:_]', '', x))
 
     # tokenize
     # data['tokens'] = data[col].apply(lambda x: nltk.word_tokenize(x))
     # data['tokens'] = data[col].apply(lambda x: re.split(' |/|/.', x))
-    data['tokens'] = data[col].apply(lambda x: re.split('[ .-]', x))
+    data['tokens'] = data[col].apply(lambda x: re.split('[ .-]+', x))
 
     # convert to narrow data
     tokenized_df = data.explode('tokens')
 
     return(tokenized_df)
-
-# re.sub('[.,]', '', 'cert. 4, in x')
 
 # This is the fix applied before tokens are pasted together again
 def fix_bachelor_token(string):
@@ -73,6 +71,7 @@ def fix_bachelor_token(string):
     string = re.sub(pattern = "^bahelor$", repl = corrected, string = string)
 
     string = re.sub(pattern = "^batch$", repl = corrected, string = string)
+    string = re.sub(pattern = "^batchelor$", repl = corrected, string = string)
     string = re.sub(pattern = "^batchler$", repl = corrected, string = string)
 
     string = re.sub(pattern = "^bauchor$", repl = corrected, string = string)
@@ -102,8 +101,6 @@ def fix_bachelor_2(string):
     string = re.sub(r'([a-z ]*) degree$', repl = corrected, string = string)
 
     return(string)
-
-# fix_bachelor_2('associate degree in graphic design')
 
 def fix_certificate(string):
     string = str(string)
@@ -155,6 +152,8 @@ def fix_certificate(string):
 
     return(string)
 
+fix_certificate('C4349 Certificate IV in Education Support')
+
 def fix_diploma(string):
     string = str(string)
     string = re.sub(pattern = "dip[a-z]*", repl = "diploma", string = string)
@@ -191,9 +190,6 @@ def fix_associate_degree(string):
 
     return(string)
 
-# fix_associate_degree('associate degree in graphic design')
-
-
 def fix_ampersand(string):
     string = str(string)
     string = re.sub(pattern = "&", repl = "and", string = string)
@@ -223,8 +219,6 @@ def fix_accounting_bookkeeping(string):
     string = re.sub(r'^accounting and booking ([ az]*)', repl = r'accounting and bookkeeping \1', string = string)
 
     return(string)
-
-# fix_accounting_bookkeeping('accounting and booking certificate iv')
 
 def fix_aged_care(string):
     string = str(string)
@@ -288,9 +282,20 @@ def fix_ecec(string):
 
     string = re.sub(r'(diploma of |certificate [iv]* in )childcare$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )child care$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )early childhood[ a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )chile care$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )earlt[ a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )early child[ a-z]*', corrected, string = string)
+    # string = re.sub(r'(diploma of |certificate [iv]* in )early childhood[ a-z]*', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )early education[ a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )early learning[ a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )early vhildhood[ a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )early year[ a-z]*', corrected, string = string)
+    
+    string = re.sub(r'(diploma of |certificate [iv]* in )cc$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )ecc$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )ece$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )ecec$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )ecce$', corrected, string = string)
     
     return(string)
 
@@ -380,9 +385,11 @@ def fix_science(string):
 
     replace = 'science'
     
+    string = re.sub(pattern = '^sccienc[a-z]*', repl = replace, string = string)
+    string = re.sub(pattern = '^sciences$', repl = replace, string = string)
     string = re.sub(pattern = '^sciense$', repl = replace, string = string)
     string = re.sub(pattern = '^scienec$', repl = replace, string = string)
-    string = re.sub(pattern = '^ofscience$', repl = replace, string = string)
+    string = re.sub(pattern = '^ofscience$', repl = 'of science', string = string)
     string = re.sub(pattern = '^science$,', repl = replace, string = string)
     string = re.sub(pattern = '^sciense$', repl = replace, string = string)
 
@@ -448,18 +455,21 @@ def add_dip_details(row):
     else:
         return(row['s_fs_name_v_fixed'])
 
+# Intended to...?
 def add_spaces(string):
     string = str(string)
 
     string = re.sub(r'([1-4])([a-z]*)', repl = r'\1 \2', string = string)
     string = re.sub(r'([a-z])([1-4])', repl = r'\1 \2', string = string)
 
-    string = re.sub(pattern = "4", repl = "iv", string = string)
-    string = re.sub(pattern = "3", repl = "iii", string = string)
-    string = re.sub(pattern = "2", repl = "ii", string = string)
-    string = re.sub(pattern = "1", repl = "i", string = string)
+    string = re.sub(pattern = "^4$", repl = "iv", string = string)
+    string = re.sub(pattern = "^3$", repl = "iii", string = string)
+    string = re.sub(pattern = "^2$", repl = "ii", string = string)
+    string = re.sub(pattern = "^1$", repl = "i", string = string)
 
     return(string)
+
+add_spaces('22251certificate')
 
 def bachelor_of(x):
     string = re.sub(r'(bachelor) in ([a-z]*)' , r'\1 of \2', str(x))
@@ -486,10 +496,26 @@ def certificate_in(x):
 
     # Add IN after cert if missing
     if re.match('certificate', string):
-        if re.match(r'certificate ([iv]*) in', string):
+        if re.match(r'certificate ([iv]) in$', string):
             string = string
         else:
-            string = re.sub(r'certificate ([iv]*)', repl = r'certificate \1 in', string = string)
+            string = re.sub(r'certificate ([iv]) ([a-z]*)', repl = r'certificate \1 in \2', string = string)
+
+    return(string)
+
+# certificate_in('certificate iii individual support')
+
+# TODO
+def masters_of(x):
+
+    string = str(x)
+
+    return(string)
+
+def reposition_qual_level(x):
+
+    string = re.sub(r'([ a-z]*) (diploma)', r'\2 of \1', str(x))
+    string = re.sub(r'([ a-z]*) (certificate [iv]*)', r'\2 in \1', string)
 
     return(string)
 
@@ -514,6 +540,7 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_advanced)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_associate_token)
 
+    # Is this doing more harm than good?
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(add_spaces)
 
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_business)
@@ -581,6 +608,7 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_associate_degree)
 
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(remove_meaningless_names)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(reposition_qual_level)
 
     return(df_fixed)
 
@@ -613,14 +641,14 @@ fs_merged = fs_merged.drop(['verbatim_course_code', 'Course', 'LatestCourseTitle
 fs_merged.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.csv", index = False)
 
 # Exploring the data for more improvement opportunities and bugs
-fs_merged[~pd.isna(fs_merged['verbatim_course_code'])]['verbatim_course_code'].unique()
+fs_merged['s_fs_name_v_fixed'] = fs_merged.apply(lambda x: '' if pd.isna(x['s_fs_name_v_fixed']) == True else x['s_fs_name_v_fixed'], axis = 1)
+fs_merged['s_fs_name_v'] = fs_merged.apply(lambda x: '' if pd.isna(x['s_fs_name_v']) == True else x['s_fs_name_v'], axis = 1)
 
-fs_merged['verbatim_course_code'].value_counts().head(20)
+fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate ii in certificate')]
+fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate  in certificate')]
 
-temp = tokenize(df)
-tokenized_df[tokenized_df['tokens2'].str.contains("commun")]['tokens2'].value_counts()
 
-fs[fs['s_fs_name_v_fixed'].str.contains('^certificate [iv]* in$', regex = True)]
-fs[fs['s_fs_name_v_fixed'].str.contains('^', regex = True)]
+fs_merged[fs_merged['s_fs_name_v_fixed'] == 'chce  diploma of early childhood education and care']
+fs_merged[fs_merged['s_fs_name_v_fixed'] == 'c iv iii iv 9certificate iv in  in education support  (chc iv 0ii i iii )']
 
-fs[fs['s_fs_name_v_fixed'].str.contains('diploma of early childhood')]['s_fs_name_v_fixed'].value_counts().head(6)
+fs_merged[fs_merged['SurveyResponseID'] == 'S031033']

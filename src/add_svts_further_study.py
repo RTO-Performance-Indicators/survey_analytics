@@ -59,32 +59,32 @@ merged['fs_source'] = merged.apply(lambda x: 'survey & SVTS' if x['s_fs_name_v_f
 merged['fs_source'] = merged.apply(lambda x: 'SVTS' if (pd.notna(x['CourseName'])) & (pd.isna(x['s_fs_name_v_fixed'])) else x['fs_source'], axis = 1)
 merged['fs_source'] = merged.apply(lambda x: 'SVTS' if (pd.notna(x['CourseName'])) &  (x['CourseName'] != x['s_fs_name_v_fixed']) else x['fs_source'], axis = 1)
 merged['fs_source'] = merged.apply(lambda x: 'survey' if (pd.notna(x['s_fs_name_v_fixed'])) & (pd.isna(x['CourseName'])) else x['fs_source'], axis = 1)
-merged.fs_source.value_counts()
+# merged.fs_source.value_counts()
 
 # TODO: Some course names are still missing despite valid CourseID_y
-merged[merged['fs_source'] == '']
+# merged[merged['fs_source'] == '']
 
 # TODO: Some coures names are also very similar between survey and svts,
 #       but because they are different, they are recognised as a separate course,
 #       and listed as source = survey (survey_valid code below)
-merged['similarity'] = similar.apply(lambda x: Levenshtein.distance(x['s_fs_name_v_fixed'], x['CourseName']), axis = 1)
-merged.sort_values(['similarity'])
+# merged['similarity'] = merged.apply(lambda x: Levenshtein.distance(x['s_fs_name_v_fixed'], x['CourseName']), axis = 1)
+# merged.sort_values(['similarity'])
 
 # Lots of verbatim are incredibly similar to the svts course name,
 # but some may legitimately be different, particularly the cert ii and cert iii courses
 # where people have gone on to do the cert ii, then subsequently the cert iii
-merged[merged['similarity'] == 1][['SLK', 's_fs_name_v_fixed', 'CourseName']]
+# merged[merged['similarity'] == 1][['SLK', 's_fs_name_v_fixed', 'CourseName']]
 # Meanwhile, sometimes the cert ii doesn't exist, and it must have been the cert iii that
 # studied.
-merged[merged['SLK'] == 339925402][['SLK', 's_fs_name_v_fixed', 'CourseName']]
-merged[merged['SLK'] == 249640142][['SLK', 's_fs_name_v_fixed', 'CourseName']]
+# merged[merged['SLK'] == 339925402][['SLK', 's_fs_name_v_fixed', 'CourseName']]
+# merged[merged['SLK'] == 249640142][['SLK', 's_fs_name_v_fixed', 'CourseName']]
 
 # So, check whether the course name is legitimate
-merged['valid_course_name'] = np.isin(merged['s_fs_name_v_fixed'], superseded['LatestCourseTitle'])
-merged.valid_course_name.value_counts()
+# merged['valid_course_name'] = np.isin(merged['s_fs_name_v_fixed'], superseded['LatestCourseTitle'])
+# merged.valid_course_name.value_counts()
 
 # And because of the imperfect match, the fs_source has been allocated to 'svts'
-merged[merged.similarity == 1].fs_source.value_counts()
+# merged[merged.similarity == 1].fs_source.value_counts()
 
 
 
@@ -94,6 +94,7 @@ survey_valid = merged[(merged['s_fs_name_v_fixed'] != merged['CourseName']) & (p
 survey_valid['fs_source'] = 'survey'
 survey_valid = survey_valid[['SurveyResponseID', 'SurveyYear', 'TOID_x', 'ClientIdentifier_x',
                              'CourseID_x', 'SupercededCourseID', 'CourseCommencementDate_x',
+                             'CourseLevelDesc',
                              's_fs_name_v_fixed', 'level_description_x', 'fs_source']]
 survey_valid = survey_valid.rename(columns = {'TOID_x': 'TOID',
                                               'ClientIdentifier_x': 'ClientIdentifier',
@@ -106,6 +107,7 @@ survey_valid = survey_valid.rename(columns = {'TOID_x': 'TOID',
 svts_valid = merged[merged['fs_source'] != 'survey']
 svts_valid = svts_valid[['SurveyResponseID', 'SurveyYear', 'TOID_x', 'ClientIdentifier_x',
                              'CourseID_x', 'SupercededCourseID', 'CourseCommencementDate_x',
+                             'CourseLevelDesc',
                              'CourseName', 'level_description_y', 'fs_source']]
 svts_valid = svts_valid.rename(columns = {'TOID_x': 'TOID',
                                          'ClientIdentifier_x': 'ClientIdentifier',
@@ -117,6 +119,6 @@ svts_valid = svts_valid.rename(columns = {'TOID_x': 'TOID',
 # Row bind survey_valid and svts_valid
 further_study_df = survey_valid.append(svts_valid)
 
-further_study_df
-
+further_study_df = further_study_df[['SurveyResponseID', 'SurveyYear', 'TOID', 'SupercededCourseID', 'CourseLevelDesc', 'fs_course_name', 'level_description', 'fs_source']]
 # Write to csv
+further_study_df.to_csv('S:/RTOPI/Research projects/Further study/Output/further_study.csv', index = False)
