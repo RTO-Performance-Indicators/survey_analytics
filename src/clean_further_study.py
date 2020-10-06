@@ -58,6 +58,26 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
 
     return(tokenized_df)
 
+def arabic_to_roman(token):
+    token = re.sub(pattern = '^1v$', repl = 'iv', string = token)
+    token = re.sub(pattern = '^111$', repl = 'iii', string = token)
+    token = re.sub(pattern = '^11', repl = 'ii', string = token)
+    token = re.sub(pattern = '^1$', repl = 'i', string = token)
+
+    return(token)
+
+# arabic_to_roman('11')
+
+def fix_roman(token):
+    token = re.sub(pattern = '^lv$', repl = 'iv', string = token)
+    token = re.sub(pattern = '^lll$', repl = 'iii', string = token)
+    token = re.sub(pattern = '^ll$', repl = 'ii', string = token)
+    token = re.sub(pattern = '^l$', repl = 'i', string = token)
+
+    return(token)
+
+# fix_roman('ll')
+
 # This is the fix applied before tokens are pasted together again
 def fix_bachelor_token(string):
     
@@ -462,10 +482,11 @@ def add_spaces(string):
     string = re.sub(r'([1-4])([a-z]*)', repl = r'\1 \2', string = string)
     string = re.sub(r'([a-z])([1-4])', repl = r'\1 \2', string = string)
 
-    string = re.sub(pattern = "^4$", repl = "iv", string = string)
-    string = re.sub(pattern = "^3$", repl = "iii", string = string)
-    string = re.sub(pattern = "^2$", repl = "ii", string = string)
-    string = re.sub(pattern = "^1$", repl = "i", string = string)
+    # Deprecated (moved to arabic_to_roman function)
+    # string = re.sub(pattern = "^4$", repl = "iv", string = string)
+    # string = re.sub(pattern = "^3$", repl = "iii", string = string)
+    # string = re.sub(pattern = "^2$", repl = "ii", string = string)
+    # string = re.sub(pattern = "^1$", repl = "i", string = string)
 
     return(string)
 
@@ -531,9 +552,10 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     # Tokenize s_fs_name_v column
     tokenized_df = tokenize(dataframe, id = id, col = col)
 
-    tokenized_df['tokens2'] = tokenized_df['tokens'].apply(fix_ampersand)
-
     # Fix tokens
+    tokenized_df['tokens2'] = tokenized_df['tokens'].apply(fix_ampersand)
+    tokenized_df['tokens2'] = tokenized_df['tokens'].apply(arabic_to_roman)
+    tokenized_df['tokens2'] = tokenized_df['tokens'].apply(fix_roman)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_bachelor_token)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_certificate)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_diploma)
@@ -645,10 +667,13 @@ fs_merged['s_fs_name_v_fixed'] = fs_merged.apply(lambda x: '' if pd.isna(x['s_fs
 fs_merged['s_fs_name_v'] = fs_merged.apply(lambda x: '' if pd.isna(x['s_fs_name_v']) == True else x['s_fs_name_v'], axis = 1)
 
 fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate ii in certificate')]
-fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate  in certificate')]
+fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate  in certificate ii inll in eal')]
 
 
 fs_merged[fs_merged['s_fs_name_v_fixed'] == 'chce  diploma of early childhood education and care']
-fs_merged[fs_merged['s_fs_name_v_fixed'] == 'c iv iii iv 9certificate iv in  in education support  (chc iv 0ii i iii )']
+fs_merged[fs_merged['s_fs_name_v_fixed'] == 'certificate i in certificate ii in in in eal  (access)']
 
 fs_merged[fs_merged['SurveyResponseID'] == 'S031033']
+
+tokenized_df[tokenized_df['SurveyResponseID'] == 'S126502']
+df_fixed[df_fixed['SurveyResponseID'] == 'S126502']
