@@ -120,5 +120,9 @@ svts_valid = svts_valid.rename(columns = {'TOID_x': 'TOID',
 further_study_df = survey_valid.append(svts_valid)
 
 further_study_df = further_study_df[['SurveyResponseID', 'SurveyYear', 'TOID', 'SupercededCourseID', 'CourseLevelDesc', 'fs_course_name', 'level_description', 'fs_source']]
+
+# Remove any duplicates
+further_study_df = further_study_df.drop_duplicates()
+
 # Write to csv
 further_study_df.to_csv('S:/RTOPI/Research projects/Further study/Output/further_study.csv', index = False)

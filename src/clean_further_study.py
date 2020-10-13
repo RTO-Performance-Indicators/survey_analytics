@@ -46,7 +46,7 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
     data['level_description'] = data['level_description'].fillna('Not available')
     
     data[col] = data[col].apply(lambda x: x.lower())
-    data[col] = data[col].apply(lambda x: re.sub(r'[.,:_]', '', x))
+    data[col] = data[col].apply(lambda x: re.sub(r'[.,:_?]+', '', x))
 
     # tokenize
     # data['tokens'] = data[col].apply(lambda x: nltk.word_tokenize(x))
@@ -60,13 +60,19 @@ def tokenize(data = df, id = 'SurveyResponseID', col = 's_fs_name_v'):
 
 def arabic_to_roman(token):
     token = re.sub(pattern = '^1v$', repl = 'iv', string = token)
+    token = re.sub(pattern = '^1111$', repl = 'iv', string = token)
     token = re.sub(pattern = '^111$', repl = 'iii', string = token)
-    token = re.sub(pattern = '^11', repl = 'ii', string = token)
+    token = re.sub(pattern = '^11$', repl = 'ii', string = token)
     token = re.sub(pattern = '^1$', repl = 'i', string = token)
+
+    token = re.sub(pattern = '\|\|\|', repl = 'iii', string = token)
+    token = re.sub(pattern = '\|\|', repl = 'ii', string = token)
+    token = re.sub(pattern = '\|', repl = 'i', string = token)
 
     return(token)
 
-# arabic_to_roman('11')
+# arabic_to_roman('|||')
+# re.sub(pattern = '\|\|\|', repl = 'iii', string = '|||')
 
 def fix_roman(token):
     token = re.sub(pattern = '^lv$', repl = 'iv', string = token)
@@ -125,6 +131,12 @@ def fix_bachelor_2(string):
 def fix_certificate(string):
     string = str(string)
     if string != 'certified':
+        string = re.sub(pattern = "^c1$", repl = "certificate i", string = string)
+        string = re.sub(pattern = "^c2$", repl = "certificate ii", string = string)
+        string = re.sub(pattern = "^c3$", repl = "certificate iii", string = string)
+        string = re.sub(pattern = "^c4$", repl = "certificate iv", string = string)
+
+        string = re.sub(pattern = "^centeficate$", repl = "certificate", string = string)
         string = re.sub(pattern = "^certi$", repl = "certificate i", string = string)
         string = re.sub(pattern = "^certii$", repl = "certificate ii", string = string)
         string = re.sub(pattern = "^certiii$", repl = "certificate iii", string = string)
@@ -132,8 +144,10 @@ def fix_certificate(string):
         string = re.sub(pattern = "^cert1$", repl = "certificate i", string = string)
         string = re.sub(pattern = "^cert11$", repl = "certificate ii", string = string)
         string = re.sub(pattern = "^cert111$", repl = "certificate iii", string = string)
+        string = re.sub(pattern = "^cert2$", repl = "certificate ii", string = string)
         string = re.sub(pattern = "^cert3$", repl = "certificate iii", string = string)
         string = re.sub(pattern = "^cert4$", repl = "certificate iv", string = string)
+        string = re.sub(pattern = "^cetificate$", repl = "certificate", string = string)
         string = re.sub(pattern = "^cirt$", repl = "certificate iv", string = string)
 
         # Convert Arabic to Roman numbers
@@ -172,7 +186,7 @@ def fix_certificate(string):
 
     return(string)
 
-fix_certificate('C4349 Certificate IV in Education Support')
+# fix_certificate('C4349 Certificate IV in Education Support')
 
 def fix_diploma(string):
     string = str(string)
@@ -212,33 +226,29 @@ def fix_associate_degree(string):
 
 def fix_ampersand(string):
     string = str(string)
+    
     string = re.sub(pattern = "&", repl = "and", string = string)
+    string = re.sub(pattern = "\+", repl = "and", string = string)
     
     return(string)
 
-def fix_parentheses(string):
-    string = str(string)
-
-    string = re.sub(pattern = r'([a-z]*)\(', repl = r'\1 (', string = string)
-    string = re.sub(pattern = r'\)([a-z]*)', repl = r') \1', string = string)
-
-    return(string)
+# fix_ampersand('certificate iv in accounting + bookkeeping')
 
 def fix_accounting_bookkeeping(string):
     string = str(string)
 
-    corrected = r'\1accounting and bookkeeping'
+    corrected = r'\1 accounting and bookkeeping'
     
-    string = re.sub(r'(diploma of |certificate [iv]* in )accountant and bookkeeping$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )accounting + bookkeeping$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and booking ([ a-z]*)', repl = r'\1accounting and bookkeeping \2', string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and bookkeeper$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )accounting and bookmaker$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )bookkeeping and accounting$', corrected, string = string)
-
-    string = re.sub(r'^accounting and booking ([ az]*)', repl = r'accounting and bookkeeping \1', string = string)
+    string = re.sub(r'(in|of) account and[a-z ]*', repl = corrected, string = string)
+    string = re.sub(r'(in|of) accountant and[a-z ]*', repl = corrected, string = string)
+    string = re.sub(r'(in|of) accounting + book[a-z ]*', repl = corrected, string = string)
+    string = re.sub(r'(in|of) accounting and book[ a-z]*', repl = corrected, string = string)
+    string = re.sub(r'(in|of) book[ a-z]*', repl = corrected, string = string)
 
     return(string)
+
+# fix_accounting_bookkeeping('certificate iv in account and bookkeeping')
+# fix_accounting_bookkeeping('advanced diploma of accountant and bookkeeping')
 
 def fix_aged_care(string):
     string = str(string)
@@ -255,16 +265,20 @@ def fix_aged_care(string):
 def fix_build_const(string):
     string = str(string)
 
-    corrected = r'\1building and construction'
+    corrected = r'\1 building and construction'
 
-    string = re.sub(r'(diploma of |certificate [iv]* in )building construction', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )construction and building', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )building construction', corrected, string = string)
+    string = re.sub(r'(of|in) building and con[a-z]* ', corrected, string = string)
+    string = re.sub(r'(of|in) building con[a-z]*', corrected, string = string)
+    string = re.sub(r'(of|in) construction and building', corrected, string = string)
+    string = re.sub(r'(of|in) building construction', corrected, string = string)
 
     # Specific case
     string = re.sub(r'(diploma of |certificate [iv]* in )building and construction building', r'\1building and construction (building)', string = string)
 
     return(string)
+
+# fix_build_const('certificate iv in building construcrion')
+# fix_build_const('certificate iv in building construction (building)')
 
 def fix_business(string):
     string = str(string)
@@ -280,6 +294,21 @@ def fix_business(string):
     string = re.sub(pattern = 'businees$', repl = replace, string = string)
 
     return(string)
+
+def fix_child_intervention(string):
+    string = str(string)
+
+    replace = r'\1 child, youth and family intervention'
+
+    string = re.sub(pattern = '(in|of) child and y[ a-z]*', repl = replace, string = string)
+    string = re.sub(pattern = '(in|of) child family[ a-z]*', repl = replace, string = string)
+    string = re.sub(pattern = '(in|of) child health[ a-z]*', repl = replace, string = string)
+    string = re.sub(pattern = '(in|of) child youth[ a-z]*', repl = replace, string = string)
+    string = re.sub(pattern = '(in|of) childyou[ a-z]*', repl = replace, string = string)
+
+    return(string)
+
+# fix_child_intervention('certificate iv in child youth and family intervention')
 
 def fix_community(string):
     string = str(string)
@@ -300,22 +329,22 @@ def fix_ecec(string):
     
     corrected = r'\1early childhood education and care'
 
-    string = re.sub(r'(diploma of |certificate [iv]* in )childcare$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )child care$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )child care[a-z]*', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )chile care$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )childcare[a-z ]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )childhood[a-z ]*', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )earlt[ a-z]*', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )early child[ a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )early chi[ a-z]*', corrected, string = string)
     # string = re.sub(r'(diploma of |certificate [iv]* in )early childhood[ a-z]*', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )early education[ a-z]*', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )early learning[ a-z]*', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )early vhildhood[ a-z]*', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )early year[ a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )earlych[ a-z]*', corrected, string = string)
     
     string = re.sub(r'(diploma of |certificate [iv]* in )cc$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )ecc$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )ece$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )ecec$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )ecce$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )ecc[a-z ]*$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )ece[a-z ]*', corrected, string = string)
     
     return(string)
 
@@ -326,7 +355,11 @@ def fix_electrotech(string):
 
     string = re.sub(r'(diploma of |certificate [iv]* in )electro technology$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )electro tech$', corrected, string = string)
-    string = re.sub(r'(diploma of |certificate [iv]* in )electrotech$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )electrote[a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )electrt[a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )electrology$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )electricte[a-z]*$', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )electritech[a-z]*$', corrected, string = string)
 
     return(string)
 
@@ -365,6 +398,22 @@ def fix_hospitality(string):
 
     return(string)
 
+def fix_ind_supp(string):
+    string = str(string)
+
+    replace = 'individual support'
+
+    string = re.sub(pattern = 'ind su[a-z ]*', repl = replace, string = string)
+    string = re.sub(pattern = 'individual[a-z ]*', repl = replace, string = string)
+    string = re.sub(pattern = 'indiv[a-z ]*', repl = replace, string = string)
+    string = re.sub(pattern = 'indov[a-z ]*', repl = replace, string = string)
+
+    return(string)
+
+# fix_ind_supp('certificate iii in ind support')
+# fix_ind_supp('certificate iii in indovidual support')
+# fix_ind_supp('certificate iii in indivual support')
+
 def fix_it(string):
     string = str(string)
     
@@ -400,6 +449,16 @@ def fix_nursing(string):
 
     return(string)
 
+def fix_parentheses(string):
+    string = str(string)
+
+    string = re.sub(pattern = '\( ', repl = '(', string = string)
+    string = re.sub(pattern = ' \)', repl = ')', string = string)
+
+    return(string)
+
+# fix_parentheses('( access )')
+
 def fix_science(string):
     string = str(string)
 
@@ -414,6 +473,38 @@ def fix_science(string):
     string = re.sub(pattern = '^sciense$', repl = replace, string = string)
 
     return(string)
+
+# Miscellaneous spelling errors
+# Can be applied at tokenized stage AND joined stage
+def fix_spelling(string):
+    string = str(string)
+
+    string = re.sub(pattern = 'adaults', repl = 'adults', string = string)
+    string = re.sub(pattern = 'aging', repl = 'ageing', string = string)
+    string = re.sub(pattern = 'aldults', repl = 'adults', string = string)
+    string = re.sub(pattern = 'asults', repl = 'adults', string = string)
+    string = re.sub(pattern = 'brick lay[a-z]*', repl = 'bricklaying', string = string)
+    string = re.sub(pattern = 'brick ly[a-z]*', repl = 'bricklaying', string = string)
+    string = re.sub(pattern = 'cetificate', repl = 'certificate', string = string)
+    string = re.sub(pattern = 'electrotech[a-z]*', repl = 'electrotechnology', string = string)
+    string = re.sub(pattern = 'genural', repl = 'general', string = string)
+    string = re.sub(pattern = 'gereral', repl = 'general', string = string)
+    string = re.sub(pattern = 'infrastucture', repl = 'infrastructure', string = string)
+    string = re.sub(pattern = 'litracy', repl = 'literacy', string = string)
+    string = re.sub(pattern = 'machanic', repl = 'mechanic', string = string)
+    string = re.sub(pattern = 'nmueracy', repl = 'numeracy', string = string)
+    string = re.sub(pattern = 'pre app[a-z]*', repl = 'pre-apprenticeship', string = string)
+    string = re.sub(pattern = 'preapp[a-z]*', repl = 'pre-apprenticeship', string = string)
+
+    string = re.sub(pattern = 'supoport', repl = 'support', string = string)
+    string = re.sub(pattern = 'work ed[a-z]*', repl = 'work education', string = string)
+    string = re.sub(pattern = 'writen', repl = 'written', string = string)
+    
+
+    return(string)
+
+# fix_spelling('certificate ii in electrotechnology')
+# fix_spelling('certificate ii in electrotechnolo (career start)')
 
 def fix_training(string):
     string = str(string)
@@ -456,6 +547,11 @@ def fix_university(string):
 
     return(string)
 
+def fix_very(token):
+    return(re.sub('^very$', repl = 'certificate', string = token))
+
+# fix_very('very')
+
 def fix_vet_nursing(string):
     string = str(string)
     
@@ -464,16 +560,81 @@ def fix_vet_nursing(string):
     return(string)
 
 def add_cert_details(row):
-    if (row['s_fs_lev'] in [1, 2, 3, 4]) & (row['level_desc_in_fixed'] == False):
-        return(row['level_description'] + " in " + row['s_fs_name_v_fixed'])
+    import re
+
+    if(row['s_fs_lev'] in [1, 2, 3, 4]) & (row['level_desc_in_fixed'] == False):
+        if re.search('^certificate in', row['s_fs_name_v_fixed']):
+            fs = re.sub('^certificate in', '', row['s_fs_name_v_fixed'])
+            fs = row['level_description'] + ' in' + fs
+        elif re.search('[a-z ]* certificate$', row['s_fs_name_v_fixed']):
+            fs = re.sub(' certificate', '', row['s_fs_name_v_fixed'])
+            fs = row['level_description'] + ' in ' + fs
+        elif re.search('^[iv]+', row['s_fs_name_v_fixed']):
+            fs = re.sub(r'^([iv]+)', r'certificate \1', row['s_fs_name_v_fixed'])
+        
+        # Sometimes the level_description doesn't match the verbatim
+        # in these cases, stick with verbatim 
+        # as in these situations s_fs_lev is more often incorrect
+        elif re.search('^certificate [iv]+', row['s_fs_name_v_fixed']):
+            fs = row['s_fs_name_v_fixed']
+        elif re.search('diploma', row['s_fs_name_v_fixed']):
+            fs = row['s_fs_name_v_fixed']
+        else:
+            fs = row['level_description'] + ' in ' + row['s_fs_name_v_fixed']
     else:
-        return(row['s_fs_name_v_fixed'])
+        fs = row['s_fs_name_v_fixed']
+
+    return(fs)
+
+# test = {'s_fs_lev': [1, 2, 2, 3, 4],
+#         's_fs_name_v_fixed': ['certificate i in x',
+#                               'certificate in x',
+#                               'x certificate',
+#                               'diploma of x',
+#                               'iv in disability'],
+#         'level_description': ['certificate i', 'certificate ii', 'certificate ii', 'certificate iii', 'certificate iv'],
+#         'level_desc_in_fixed': [True, False, False, False, False]
+#         }
+# test_df = pd.DataFrame(test)
+# test_df['fixed'] = test_df.apply(lambda x: add_cert_details(x), axis = 1)
+# test_df
 
 def add_dip_details(row):
-    if (row['s_fs_lev'] in [6, 7]) & (row['level_desc_in_fixed'] == False):
-        return(row['level_description'] + " of " + row['s_fs_name_v_fixed'])
+    if row['s_fs_lev'] in [6, 7]:
+        if row['level_desc_in_fixed'] == True:
+            if re.search('([a-z ]*) advanced diploma', string = row['s_fs_name_v_fixed']):
+                fs = re.sub(r'([a-z ]*) advanced diploma', repl = r'advanced diploma of \1', string = row['s_fs_name_v_fixed'])
+            elif re.search('([a-z ]*) diploma', string = row['s_fs_name_v_fixed']):
+                fs = re.sub(r'([a-z ]*) diploma', repl = r'diploma of \1', string = row['s_fs_name_v_fixed'])
+            else:
+                fs = row['s_fs_name_v_fixed']
+        else:
+            if re.search('diploma', string = row['s_fs_name_v_fixed']):
+                if re.search('diploma of', string = row['s_fs_name_v_fixed']):
+                    fs = row['s_fs_name_v_fixed']
+                else:
+                    fs = re.sub('diploma', repl = 'diploma of', string = row['s_fs_name_v_fixed'])
+            elif re.search('certificate', string = row['s_fs_name_v_fixed']):
+                fs = row['s_fs_name_v_fixed']
+            else:
+                fs = row['level_description'] + ' of ' + row['s_fs_name_v_fixed']
     else:
-        return(row['s_fs_name_v_fixed'])
+        fs = row['s_fs_name_v_fixed']
+    return(fs)
+
+# test = {'s_fs_lev': [6, 7, 6, 6, 7],
+#         's_fs_name_v_fixed': ['diploma of x',
+#                               'certificate in x',
+#                               'advanced diploma x',
+#                               'x diploma',
+#                               'x'],
+#         'level_description': ['diploma', 'advanced diploma', 'diploma', 'diploma', 'advanced diploma'],
+#         'level_desc_in_fixed': [True, False, False, True, False],
+#         'expected': ['diploma of x', 'certificate in x', 'advanced diploma of x', 'diploma of x', 'advanced diploma of x']
+#         }
+# test_df = pd.DataFrame(test)
+# test_df['fixed'] = test_df.apply(lambda x: add_dip_details(x), axis = 1)
+# test_df
 
 # Intended to...?
 def add_spaces(string):
@@ -513,18 +674,19 @@ def diploma_of(x):
 
 def certificate_in(x):
     # Change cert OF to cert IN
-    string = re.sub(r'(certificate [a-z]*) of ([a-z]*)' , r'\1 in \2', str(x))
+    string = re.sub(r'(certificate [iv]+) of ([a-z]*)' , r'\1 in \2', str(x))
 
     # Add IN after cert if missing
     if re.match('certificate', string):
-        if re.match(r'certificate ([iv]) in$', string):
+        if re.match(r'certificate ([iv]+) in ', string):
             string = string
         else:
-            string = re.sub(r'certificate ([iv]) ([a-z]*)', repl = r'certificate \1 in \2', string = string)
+            string = re.sub(r'certificate ([iv]+) ([a-z]*)', repl = r'certificate \1 in \2', string = string)
 
     return(string)
 
 # certificate_in('certificate iii individual support')
+# certificate_in('certificate iv in individual support')
 
 # TODO
 def masters_of(x):
@@ -561,6 +723,7 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_diploma)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_advanced)
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_associate_token)
+    tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(fix_very)
 
     # Is this doing more harm than good?
     tokenized_df['tokens2'] = tokenized_df['tokens2'].apply(add_spaces)
@@ -588,6 +751,9 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     group_cols = list(tokenized_df.columns.difference(['tokens', 'tokens2']))
     df_fixed = tokenized_df.groupby(group_cols)['tokens2'].apply(' '.join).reset_index(name = 's_fs_name_v_fixed')
     
+    # Remove words/ngrams
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].str.replace('part time', repl = '')
+
     # Extract course code sequence, which may have a space before the 'vic', i.e.: 22483 vic
     df_fixed['verbatim_course_code'] = df_fixed['s_fs_name_v_fixed'].str.extract(r'([a-z]*[0-9]{4,6}[a-z]*[ ]*(?:(vic))*)')[0]
     df_fixed['verbatim_course_code'] = df_fixed['verbatim_course_code'].str.replace(' ', '')
@@ -616,18 +782,24 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     df_fixed = df_fixed.drop(['level_desc_in_fixed'], axis = 1)
 
     # Fix remaining errors after tokens are joined together
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_ampersand)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_ecec)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_aged_care)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_child_intervention)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_health_services)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_nursing)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_light_vehicle_mech)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_it)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_ind_supp)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_accounting_bookkeeping)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_electrotech)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_training_assessment)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_build_const)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_bachelor_2)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_associate_degree)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_spelling)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_ampersand)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_parentheses)
 
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(remove_meaningless_names)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(reposition_qual_level)
@@ -666,14 +838,22 @@ fs_merged.to_csv("S:/RTOPI/Research projects/Further study/data/further_study.cs
 fs_merged['s_fs_name_v_fixed'] = fs_merged.apply(lambda x: '' if pd.isna(x['s_fs_name_v_fixed']) == True else x['s_fs_name_v_fixed'], axis = 1)
 fs_merged['s_fs_name_v'] = fs_merged.apply(lambda x: '' if pd.isna(x['s_fs_name_v']) == True else x['s_fs_name_v'], axis = 1)
 
-fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate ii in certificate')]
-fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate  in certificate ii inll in eal')]
+fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('edu')]
+fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('diploma of advanced diploma')]
 
 
-fs_merged[fs_merged['s_fs_name_v_fixed'] == 'chce  diploma of early childhood education and care']
-fs_merged[fs_merged['s_fs_name_v_fixed'] == 'certificate i in certificate ii in in in eal  (access)']
+fs_merged[fs_merged['s_fs_name_v_fixed'] == 'diploma of advanced of screen and media']
+fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate i in in')][['s_fs_name_v', 'level_description', 's_fs_name_v_fixed']]
+
+fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('i am')][['s_fs_name_v', 'level_description', 's_fs_name_v_fixed']]
+fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('i have')][['s_fs_name_v', 'level_description', 's_fs_name_v_fixed']]
+
+# > 200 students are studying the same course.
+# Should these actually be 'further study'?
+fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('same')][['s_fs_name_v', 'level_description', 's_fs_name_v_fixed']]
 
 fs_merged[fs_merged['SurveyResponseID'] == 'S031033']
 
 tokenized_df[tokenized_df['SurveyResponseID'] == 'S126502']
 df_fixed[df_fixed['SurveyResponseID'] == 'S126502']
+
