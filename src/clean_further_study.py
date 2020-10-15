@@ -341,6 +341,8 @@ def fix_ecec(string):
     string = re.sub(r'(diploma of |certificate [iv]* in )early vhildhood[ a-z]*', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )early year[ a-z]*', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )earlych[ a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )earlyhood[ a-z]*', corrected, string = string)
+    string = re.sub(r'(diploma of |certificate [iv]* in )eary child[ a-z]*', corrected, string = string)
     
     string = re.sub(r'(diploma of |certificate [iv]* in )cc$', corrected, string = string)
     string = re.sub(r'(diploma of |certificate [iv]* in )ecc[a-z ]*$', corrected, string = string)
@@ -479,19 +481,30 @@ def fix_science(string):
 def fix_spelling(string):
     string = str(string)
 
+    string = re.sub(pattern = 'accountting', repl = 'accounting', string = string)
+    string = re.sub(pattern = 'accountimg', repl = 'accounting', string = string)
     string = re.sub(pattern = 'adaults', repl = 'adults', string = string)
     string = re.sub(pattern = 'aging', repl = 'ageing', string = string)
     string = re.sub(pattern = 'aldults', repl = 'adults', string = string)
     string = re.sub(pattern = 'asults', repl = 'adults', string = string)
+    string = re.sub(pattern = 'asvanced', repl = 'advanced', string = string)
     string = re.sub(pattern = 'brick lay[a-z]*', repl = 'bricklaying', string = string)
     string = re.sub(pattern = 'brick ly[a-z]*', repl = 'bricklaying', string = string)
     string = re.sub(pattern = 'cetificate', repl = 'certificate', string = string)
+    string = re.sub(pattern = 'constructionmanagement', repl = 'construction management', string = string)
+    string = re.sub(pattern = 'constru[a-z]*', repl = 'construction', string = string) # Must be done after 'constructionmanagement'
+    string = re.sub(pattern = 'deploma', repl = 'diploma', string = string)
+    string = re.sub(pattern = 'deploys', repl = 'diploma', string = string)
+    string = re.sub(pattern = 'dimploma', repl = 'diploma', string = string)
+    string = re.sub(pattern = 'dioloma', repl = 'diploma', string = string)
     string = re.sub(pattern = 'electrotech[a-z]*', repl = 'electrotechnology', string = string)
     string = re.sub(pattern = 'genural', repl = 'general', string = string)
     string = re.sub(pattern = 'gereral', repl = 'general', string = string)
     string = re.sub(pattern = 'infrastucture', repl = 'infrastructure', string = string)
     string = re.sub(pattern = 'litracy', repl = 'literacy', string = string)
     string = re.sub(pattern = 'machanic', repl = 'mechanic', string = string)
+    string = re.sub(pattern = 'menchindiching', repl = 'merchandising', string = string)
+    string = re.sub(pattern = 'merchendising', repl = 'merchandising', string = string)
     string = re.sub(pattern = 'nmueracy', repl = 'numeracy', string = string)
     string = re.sub(pattern = 'pre app[a-z]*', repl = 'pre-apprenticeship', string = string)
     string = re.sub(pattern = 'preapp[a-z]*', repl = 'pre-apprenticeship', string = string)
@@ -602,7 +615,9 @@ def add_cert_details(row):
 def add_dip_details(row):
     if row['s_fs_lev'] in [6, 7]:
         if row['level_desc_in_fixed'] == True:
-            if re.search('([a-z ]*) advanced diploma', string = row['s_fs_name_v_fixed']):
+            if re.search(r'advanced diploma([a-z ]*)', string = row['s_fs_name_v_fixed']):
+                fs = row['s_fs_name_v_fixed']
+            elif re.search('([a-z ]*) advanced diploma', string = row['s_fs_name_v_fixed']):
                 fs = re.sub(r'([a-z ]*) advanced diploma', repl = r'advanced diploma of \1', string = row['s_fs_name_v_fixed'])
             elif re.search('([a-z ]*) diploma', string = row['s_fs_name_v_fixed']):
                 fs = re.sub(r'([a-z ]*) diploma', repl = r'diploma of \1', string = row['s_fs_name_v_fixed'])
@@ -622,15 +637,15 @@ def add_dip_details(row):
         fs = row['s_fs_name_v_fixed']
     return(fs)
 
-# test = {'s_fs_lev': [6, 7, 6, 6, 7],
+# test = {'s_fs_lev': [6, 7, 6, 7, 7],
 #         's_fs_name_v_fixed': ['diploma of x',
-#                               'certificate in x',
+#                               'advanced diploma',
 #                               'advanced diploma x',
-#                               'x diploma',
+#                               'advanced diploma of x',
 #                               'x'],
-#         'level_description': ['diploma', 'advanced diploma', 'diploma', 'diploma', 'advanced diploma'],
-#         'level_desc_in_fixed': [True, False, False, True, False],
-#         'expected': ['diploma of x', 'certificate in x', 'advanced diploma of x', 'diploma of x', 'advanced diploma of x']
+#         'level_description': ['diploma', 'advanced diploma', 'advanced diploma', 'diploma', 'advanced diploma'],
+#         'level_desc_in_fixed': [True, True, False, True, False],
+#         'expected': ['diploma of x', 'certificate in x', 'advanced diploma of x', 'advanced diploma of x', 'advanced diploma of x']
 #         }
 # test_df = pd.DataFrame(test)
 # test_df['fixed'] = test_df.apply(lambda x: add_dip_details(x), axis = 1)
@@ -657,6 +672,7 @@ def bachelor_of(x):
     string = re.sub(r'(bachelor) in ([a-z]*)' , r'\1 of \2', str(x))
     return(string)
 
+# Deprecated
 def diploma_of(x):
     # Change diploma IN to diploma OF
     string = re.sub(r'(diploma) in ([a-z ]*)' , r'\1 of \2', str(x))
@@ -664,21 +680,30 @@ def diploma_of(x):
     string = re.sub(r'(diploma of [a-z ]*) degree', r'\1', string)
 
     # Add OF after diploma if missing
-    if re.match('diploma', string):
-        if re.match('diploma of', string = string):
+    if re.search('^advanced diploma$', string):
+        string = string
+    elif re.search('^diploma$', string):
+        string = string
+    elif re.search('diploma', string = string):
+        if re.search('diploma of', string = string):
             string = string
         else:
             string = re.sub('diploma', repl = 'diploma of', string = string)
+    else:
+        string = string
 
     return(string) 
 
+# diploma_of('advanced diploma accounting')
+
+# deprecated
 def certificate_in(x):
     # Change cert OF to cert IN
     string = re.sub(r'(certificate [iv]+) of ([a-z]*)' , r'\1 in \2', str(x))
 
     # Add IN after cert if missing
     if re.match('certificate', string):
-        if re.match(r'certificate ([iv]+) in ', string):
+        if re.search(r'certificate ([iv]+) in ', string):
             string = string
         else:
             string = re.sub(r'certificate ([iv]+) ([a-z]*)', repl = r'certificate \1 in \2', string = string)
@@ -695,12 +720,15 @@ def masters_of(x):
 
     return(string)
 
-def reposition_qual_level(x):
+# deprecated
+# def reposition_qual_level(x):
 
-    string = re.sub(r'([ a-z]*) (diploma)', r'\2 of \1', str(x))
-    string = re.sub(r'([ a-z]*) (certificate [iv]*)', r'\2 in \1', string)
+#     string = re.sub(r'([ a-z]*) (diploma)', r'\2 of \1', str(x))
+#     string = re.sub(r'([ a-z]*) (certificate [iv]*)', r'\2 in \1', string)
 
-    return(string)
+#     return(string)
+
+# reposition_qual_level('advanced diploma')
 
 def remove_meaningless_names(x):
     meaningless_name = bool(re.search("^(certificate|diploma) [ iv]*(in|of)$", x))
@@ -802,7 +830,7 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_parentheses)
 
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(remove_meaningless_names)
-    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(reposition_qual_level)
+    # df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(reposition_qual_level) # DEPRECATED
 
     return(df_fixed)
 
@@ -812,7 +840,7 @@ fs = fs.drop(['s_fs_lev', 's_fs_name_v'], axis = 1)
 join_cols = list(fs.columns.difference(['level_description', 's_fs_lev', 's_fs_name_v', 's_fs_name_v_fixed', 'level_description', 'verbatim_course_code']))
 fs = pd.merge(df, fs, how = 'left', left_on = join_cols, right_on = join_cols)
 
-# SECTION 2 - REPLACE VERBATIM USING COURSE CODES
+# SECTION 2 - REPLACE COURSE NAME USING COURSE CODES SUPPLIED IN VERBATIM
 
 # Load and superseded course concordances
 superseded = pd.read_excel('S:/TMIPU/Info Library/ISA Data & Information/Superseded Mappings/TGA Superseded Mappings - July 2020 - All courses.xlsx',
@@ -842,7 +870,7 @@ fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('edu')]
 fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('diploma of advanced diploma')]
 
 
-fs_merged[fs_merged['s_fs_name_v_fixed'] == 'diploma of advanced of screen and media']
+fs_merged[fs_merged['s_fs_name_v_fixed'] == 'diploma of advanced']
 fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate i in in')][['s_fs_name_v', 'level_description', 's_fs_name_v_fixed']]
 
 fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('i am')][['s_fs_name_v', 'level_description', 's_fs_name_v_fixed']]
