@@ -869,7 +869,7 @@ fs_merged['s_fs_name_v'] = fs_merged.apply(lambda x: '' if pd.isna(x['s_fs_name_
 fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('edu')]
 fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('diploma of advanced diploma')]
 
-
+    
 fs_merged[fs_merged['s_fs_name_v_fixed'] == 'diploma of advanced']
 fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate i in in')][['s_fs_name_v', 'level_description', 's_fs_name_v_fixed']]
 

@@ -59,6 +59,7 @@ merged['fs_source'] = merged.apply(lambda x: 'survey & SVTS' if x['s_fs_name_v_f
 merged['fs_source'] = merged.apply(lambda x: 'SVTS' if (pd.notna(x['CourseName'])) & (pd.isna(x['s_fs_name_v_fixed'])) else x['fs_source'], axis = 1)
 merged['fs_source'] = merged.apply(lambda x: 'SVTS' if (pd.notna(x['CourseName'])) &  (x['CourseName'] != x['s_fs_name_v_fixed']) else x['fs_source'], axis = 1)
 merged['fs_source'] = merged.apply(lambda x: 'survey' if (pd.notna(x['s_fs_name_v_fixed'])) & (pd.isna(x['CourseName'])) else x['fs_source'], axis = 1)
+merged['fs_source'] = merged.apply(lambda x: 'survey' if (pd.isna(x['s_fs_name_v_fixed'])) & (pd.notna(x['level_description_y'])) else x['fs_source'], axis = 1)
 # merged.fs_source.value_counts()
 
 # TODO: Some course names are still missing despite valid CourseID_y
