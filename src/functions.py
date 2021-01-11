@@ -1,74 +1,40 @@
-import pandas as pd
-import numpy as np
 
-def measures(df, measures = [], group = [], weighted = True, weight = 'WEIGHT'):
-    
-    
 
-    # id_vars: columns to keep when data frame is melted down to a tidy data set
-    id_vars = group.copy()
-    if weighted == True:
-        id_vars.append(weight)
+def calc_prop(df, group_vars = [], vars = [], weighted = True):
 
-    # groups: after melting, the 'variable' column, containing the measure variable,
-    # becomes a new grouping variable
-    groups = group.copy()
-    groups.append('variable')
-
-    # Convert from wide to tidy data set
-    long = pd.melt(df, id_vars = id_vars, value_vars = measures)
-    long = long[~np.isnan(long['value'])]
-
-    # Nested function to return 'proportions' and 'N'
-    def prop_and_n(x):
-        d = {}
-        d['N'] = x['value'].count()
-        if weighted == True:
-            d['proportion'] = np.average(x['value'], weights = x[weight])
-        else:
-            d['proportion'] = np.average(x['value'])
-
-        return pd.Series(d, index = ['proportion', 'N'])
-
-    # Apply the nested function to the data frame
-    long = long.groupby(groups).apply(prop_and_n)
-
-    # N must be greater than 5 for reporting
-    long.loc[long['N'] < 5, 'proportion'] = np.NaN
-
-    return long
-
-def calc_binary_proportion(series, weights = 1,  missing = [-999, -99, -888, -88]):
-    
     import pandas as pd
     import numpy as np
 
-    # Is columns a pandas series?
-    if isinstance(series, pd.Series) == False:
-        raise TypeError("The 'series' argument must be a pandas series")
-    
-    if weights == 1:
-        weights = pd.Series([weights] * len(series))
+    id_vars = group_vars.copy()
 
-    # Remove missing observations
-    weights = weights[(~np.isin(series, missing)) & (~pd.isna(series))]
-    series = series[(~np.isin(series, missing)) & (~pd.isna(series))]
-    
-    # Make sure column is binary
-    if len(series.unique()) != 2:
-        raise ValueError("The series does not appear to contain binary values")
-    
-    # Calculate proportion, N, and weighted N
-    proportions = np.average(series, weights = weights, returned = True)
-    N = series.count()
+    if weighted == True:
+        id_vars.append('WEIGHT')
 
-    result = {'proportion': [proportions[0]],
-              'N': [N],
-              'N_wt': [proportions[1]]}
+    # Survey data is tidy; convert to long format
+    long = pd.melt(df, id_vars = id_vars, value_vars = vars)
+
+    # Remove invalid values (i.e. -888/-999 for unanswered / unpresented questions)
+    long = long[(long['value'] >= 0) & (long['value'] <= 5)]
+
+    # Convert from 5-scale likert to binary
+    # NOTE: Does not affect binary columns, because 0 -> 0 and 1 -> 1
+    likert_to_binary = pd.DataFrame({'value' : [0, 1, 2, 3, 4, 5], 'binary': [0, 1, 1, 0, 0, 0]})
+    long = pd.merge(long, likert_to_binary)
+
+    # 'variable' column needs to be added as a grouping variable
+    group_vars.append('variable')
+
+    # Calculate N
+    n = long.groupby(group_vars).apply(lambda x: len(x['value'])).reset_index().rename(columns = {0: 'N'})
     
-    return pd.DataFrame(data = result)
+    # Calculate proportion, depending if weighting is required
+    if weighted == True:
+        prop = long.groupby(group_vars).apply(lambda x: sum(x['binary'] * x['WEIGHT']) / sum(x['WEIGHT'])).reset_index().rename(columns = {0: 'proportion'})
+    else:
+        prop = long.groupby(group_vars).apply(lambda x: sum(x['binary']) / len(x['value'])).reset_index().rename(columns = {0: 'proportion'})
 
-# test the function
-temp = pd.Series(data = [1, 1, 0, 0, np.nan])
-calc_binary_proportion(series = temp)
+    result_long = pd.merge(prop, n)
 
+    result_long['proportion'] = result_long.apply(lambda x: np.nan if x['N'] < 5 else x['proportion'], axis = 1)
+
+    return(result_long)
