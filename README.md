@@ -1,11 +1,16 @@
-# Survey Analytics
+# README
 
-The RTO Performance Indicators team conducts analysis on the Student Satisfaction Survey, and the Employer Satisfaction Survey.
+The RTO Performance Indicators team primarily analyses two surveys: 
 
-This repository contains functions that are useful for data requests stemming from the survey data.
+1. Student Satisfaction Survey 
+2. Employer Satisfaction Survey
 
-Checkout the src folder for python code that calculates performance measures from the Student Satisfaction Survey.
+This repository contains (primarily python) code and functions that are useful for data requests.
+
+Checkout the *src* folder for code that calculates performance measures from the Student Satisfaction Survey.
 
 ## Contributing
 
-To contribute to this repository, speak to AndrewManHayChiu.
+To contribute, you must be a member of the *RTO-Performance-Indicators* team on GitHub.
+
+If you'd like to contribute, speak to [AndrewManHayChiu](https://github.com/AndrewManHayChiu) or [mjrooney87](https://github.com/mjrooney87).
