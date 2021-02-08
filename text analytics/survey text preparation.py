@@ -1,10 +1,14 @@
-#text cleaning/preparation designed for student sat survey verbatims prior to LDA modeling
+# Text cleaning/preparation designed for student sat survey verbatims 
+# prior to LDA modeling
 
-#generally each function is written to do one thing.
-#most of the individual functions are run within "prepare_text" prior to making an LDA corpus using gensim.
-#I have tried to define the functions in an order that they are defined before other functions which call them.
+# Generally each function does one thing.
 
-#after defining all the functions there is an example of how they are used to create an LDA model.
+# Most functions are run within "prepare_text" prior to making an LDA corpus using gensim.
+# I have tried to define the functions in an order that they are defined 
+# before other functions which call them.
+
+# After defining all the functions there is an example of how they are 
+# used to create an LDA model.
 
 #import required modules
 import pandas as pd
@@ -15,8 +19,10 @@ import re
 import nltk
 
 def split_words(text):
-#this function splits words that are commonly but erroneous joined together in the survey verbatims. 
-# This is run within the prepare_df function as that's where the tokenistation occurs. Prepare_df is itself called within prepare_text.
+# This function splits common words that are erroneously joined together 
+# in the survey verbatims. 
+# This is run within the prepare_df function as that's where the tokenistation occurs. 
+# Prepare_df is itself called within prepare_text.
     text = text.replace("alot","a lot")
     text = text.replace('atleast','at least')
     text = text.replace('iam','i am')
@@ -26,142 +32,184 @@ def split_words(text):
     return text
 
 def prepare_df(df, colname):
-#filter so verbatim column is not null and turn strings into lists of individual words
-#for multiple columns I would be turning them into a single column first, but this could be edited to take a list of columns if needed.
-#some basic text correction included as it is easiest before tokenising
+# Filter so verbatim column is not null and turn strings into lists of individual words
+# For multiple columns I would be turning them into a single column first, 
+# but this could be edited to take a list of columns if needed.
+# Some basic text correction included as it is easiest before tokenising
 
-    #remove null rows so string functions don't get type errors when they crop up (and it's a smaller dataset too)
+    # remove null rows so string functions don't get type errors when they crop up 
+    # (and it's a smaller dataset too)
     data = df[df[colname].notnull()]
-    #lowercase
+    
+    # lowercase
     data[colname]= [x.lower() for x in data[colname]]
-    #I then delete the apostrophes because there's high instances where people omit them e.g. didnt, im etc. this is easier than replacing each one of these words...
+   
+    # I then delete the apostrophes because there's high instances where people 
+    # omit them e.g. didnt, im etc. this is easier than replacing each one of these words...
     data[colname]= [x.replace(r"'","") for x in data[colname]]
-    #also need to split words people erroneously join together before tokenising
+    
+    # also need to split words people erroneously join together before tokenising
     data[colname]= [split_words(x) for x in data[colname]]
-    #tokenise data by returning list of all chunks of alphanumeric characters with no puncutation or whitespace. This works well enough for me compared to other options. Chose not the include hypens as in many cases the same words as used both with and without so treating them all as two words and putting them back together as bigrams standardises them.
+    
+    # tokenise data by returning list of all chunks of alphanumeric characters 
+    # with no puncutation or whitespace. This works well enough for me compared 
+    # to other options. Chose not the include hypens as in many cases the same 
+    # words as used both with and without so treating them all as two words and 
+    # putting them back together as bigrams standardises them.
     data[colname]= [re.findall(r"[\w]+", x) for x in data[colname]]    
+    
     return data
 
 def basic_bow(df,colname):
-#this function isn't part of the data cleaning and isn't required prior to LDA. It makes a nice human readable table of words and frequencies for getting a feel of the data.
-#the input must be a nested list of lists of words - like the output of prepare_df.
-#I used this to get the common spelling errors by exporting this to excel and running spellchecker through the data.
-#Also used to look at the word frequencies where I filtered the data based on the responses to other questions as a proxy for sentiment.
-    #make flat list of all tokens
+# This function isn't part of the data cleaning and isn't required prior to LDA. 
+# It makes a nice human readable table of words and frequencies for getting a feel of the data.
+# the input must be a nested list of lists of words - like the output of prepare_df.
+# I used this to get the common spelling errors by exporting this to excel and 
+# running spellchecker through the data.
+# Also used to look at the word frequencies where I filtered the data based on 
+# the responses to other questions as a proxy for sentiment.
+    
+    # make flat list of all tokens
     aslist = list(chain.from_iterable(df[colname].tolist()))
-    #alphabetise
+    # alphabetise
     aslist.sort()
-    #count occurences of each word in list. Returns a dictionary.
+    # count occurences of each word in list. Returns a dictionary.
     counted = collections.Counter(aslist)
-    #make df from dictionary and give nice column names.
+    # make df from dictionary and give nice column names.
     counts_df = pd.DataFrame.from_dict(counted, orient='index').reset_index()
     counts_df.columns = ['word','count']
-    #sort by counts from highest to lowest
+    # sort by counts from highest to lowest
     counts_df.sort_values(by=['count'], ascending=False,inplace=True)
     return counts_df
 
-#there are two versions of this so I can use it in different contexts. Generally I would use the nested list one as that's what prepare_df creates.
-#at some point I'll make them one function with a parameter to specify the input format.
+# There are two versions of this so I can use it in different contexts. 
+# Generally I would use the nested list one as that's what prepare_df creates.
+# at some point I'll make them one function with a parameter to specify the input format.
 def remove_names(textlist,namelist):
-#replaces names from a specified list with [NAME]
+# replaces names from a specified list with [NAME]
     textlist = [x.replace(x,'[NAME]') if x in namelist else x for x in textlist]
     return textlist
 
 def remove_names_nested_list(nested_list,namelist):
-#replaces names from a specified list with [NAME]
+# replaces names from a specified list with [NAME]
     textlist = [[x.replace(x,'[NAME]') if x in namelist else x for x in textlist]for textlist in nested_list]
     return textlist
     
 def spelling_is_fun(text):
-#fix common spelling errors  
-    #str.replace is reportedly faster than re.sub and since this runs on tokens rather than full verbatims no need for additional functionality of regex
-    text = text.replace('freindly','friendly')
+# fix common spelling errors  
+    # str.replace is reportedly faster than re.sub 
+    # and since this runs on tokens rather than full verbatims,
+    # there's no need for additional functionality of regex
     text = text.replace('accessable','accessible')
-    text = text.replace('waisted','wasted')
-    text = text.replace('comunity','community')
+    text = text.replace('accomod','accommod')
+    text = text.replace('allways','always')
+    text = text.replace('ather','other')
+
+    text = text.replace("bcoz'","because")
+    text = text.replace('becuse','because')
+    text = text.replace('beacuse','because')
+    text = text.replace('beacause','because')
     text = text.replace('benifit','benefit')
+    
+    text = text.replace('chisolm','chisholm')
+    text = text.replace('comunity','community')
     text = text.replace('convinient','convenient')
     text = text.replace('convienient','convenient')
     text = text.replace('convient','convenient')
-    text = text.replace('coarse','course')
-    text = text.replace('exsperience','experience')
-    text = text.replace('tremendou','tremendous')
-    text = text.replace('trainn','train')
-    text = text.replace('traner','trainer')
-    text = text.replace('srudent','student')
-    text = text.replace('organization','organisation')
-    text = text.replace('excelent','excellent')
-    text = text.replace('plesent','pleasant')
-    text = text.replace('tremendouss','tremendous')
-    text = text.replace('orginisation','organisation')
-    text = text.replace('allways','always')
-    text = text.replace('plagerised','plagiarised')
-    text = text.replace('helful','helpful')
-    text = text.replace('becuse','because')
-    text = text.replace('beacuse','because')
-    text = text.replace('traineer','teacher')
-    text = text.replace('tranier','teacher')
     text = text.replace('convience','convenience')
-    text = text.replace('coure','course')
-    text = text.replace('relivent','relevant')
-    text = text.replace('recommed','recommend')
-    text = text.replace('organistion','organisation')
-    text = text.replace('beacause','because')
-    text = text.replace('enviornment','environment')
-    text = text.replace('leant','learnt')
-    text = text.replace('flexability','flexibility')
-    text = text.replace('inviroment','environment')
-    text = text.replace('facilty','facility')
-    text = text.replace("likely'","likely")
-    text = text.replace("bcoz'","because")
-    text = text.replace("instructers'","teachers")
-    text = text.replace("educaters'","teachers")
     text = text.replace('conveniant','convenient')
-    text = text.replace('recomment','recommend')
-    text = text.replace('recomend','recommend')
-    text = text.replace('oranganisation','organisation')
-    text = text.replace('ather','other')
-    text = text.replace('expierence','experience')
+    text = text.replace('coarse','course')
+    text = text.replace('corse','course')
+    text = text.replace('coure','course')
+    
+    text = text.replace('definately','definitely')
     text = text.replace('dissappoint','disappoint')
     text = text.replace('dissapoint','disappoint')
     text = text.replace('disapoint','disappoint')
+    
+    text = text.replace("educaters'","teachers")
+    text = text.replace("enroll","enrol")
+    text = text.replace('enviornment','environment')
+    text = text.replace('excelent','excellent')
+    text = text.replace('exsperience','experience')
+    text = text.replace('expierence','experience')
+    text = text.replace('experiance','experience')
+    
+    
+    text = text.replace('facilty','facility')
+    text = text.replace('feild','field')
+    text = text.replace('flexability','flexibility')
+    text = text.replace('foresite','foresight')
+    text = text.replace('freindly','friendly')
+    text = text.replace('freidly','friendly')
+    
+    text = text.replace('greatful','grateful')
+    text = text.replace('goverment','government')
+
+    text = text.replace('helful','helpful')
+    text = text.replace('helpfull','helpful')
+    text = text.replace('homesglen','holmesglen')
+
+    text = text.replace("instructers'","teachers")
+    text = text.replace('inviroment','environment')
+    
+    text = text.replace("knowledgable","knowledgeable")
+    
+    text = text.replace('leant','learnt')
+    text = text.replace("likely'","likely")
+    
+    text = text.replace('managment','management')
+    text = text.replace('mth','month')
+    
+    text = text.replace('organize','organise')
+    text = text.replace('persue','pursue')
+    text = text.replace('organization','organisation')
+    text = text.replace('orginisation','organisation')
+    text = text.replace('organistion','organisation')
+    text = text.replace('oranganisation','organisation')
+    
+    text = text.replace('plagerised','plagiarised')
+    text = text.replace('plesent','pleasant')
+        
     text = text.replace('rother','rather')
+    text = text.replace('recomment','recommend')
+    text = text.replace('recomend','recommend')
+    text = text.replace('recommed','recommend')
+    text = text.replace('reccomend','recommend')
+    text = text.replace("recieve","receive")
+    text = text.replace('relivent','relevant')
+    text = text.replace('relevent','relevant')
+    text = text.replace('realy','really')
+    
+    text = text.replace('srudent','student') 
+    text = text.replace('studing','studying')
+    
     text = text.replace('terriffic','teriffic')
     text = text.replace('terrific','teriffic')
     text = text.replace('terific','teriffic')
-    text = text.replace('workal','work')
-    text = text.replace("enroll","enrol")
-    text = text.replace("knowledgable","knowledgeable")
-    text = text.replace("recieve","receive")
-    text = text.replace('corse','course')
-    text = text.replace('reccomend','recommend')
-    text = text.replace('helpfull','helpful')
-    text = text.replace('goverment','government')
+    text = text.replace('thier','their')
+    text = text.replace('throughly','thoroughly')
+    text = text.replace('traing','training')
+    text = text.replace('traineer','teacher')
+    text = text.replace('tranier','teacher')
+    text = text.replace('tremendouss','tremendous')
+    text = text.replace('tremendou','tremendous')
+    text = text.replace('trainn','train')
+    text = text.replace('traner','trainer')
     text = text.replace('traning','training')
     text = text.replace('trainor','teacher')
-    text = text.replace('relevent','relevant')
-    text = text.replace('yr','year')
-    text = text.replace('foresite','foresight')
-    text = text.replace('thier','their')
-    text = text.replace('traing','training')
-    text = text.replace('mth','month')
-    text = text.replace('experiance','experience')
-    text = text.replace('greatful','grateful')
-    text = text.replace('throughly','thoroughly')
-    text = text.replace('chisolm','chisholm')
-    text = text.replace('studing','studying')
-    text = text.replace('accomod','accommod')
-    text = text.replace('homesglen','holmesglen')
-    text = text.replace('definately','definitely')
-    text = text.replace('realy','really')
-    text = text.replace('persue','pursue')
-    text = text.replace('feild','field')
+    
     text = text.replace('untill','until')
-    text = text.replace('managment','management')
-    text = text.replace('freidly','friendly')
-    text = text.replace('organize','organise')
-    text = text.replace('coarse','course')
-    #these crop up presumably where people use something other than '
+
+    text = text.replace('waisted','wasted')
+    text = text.replace('workal','work')
+    
+    text = text.replace('yr','year')
+    
+    
+    
+    # use regex library for recognising patterns
+    # these crop up presumably where people use something other than '
     re.sub("didn$","didnt",text)
     re.sub("wasn$","wasnt",text)
     re.sub("couldn$","couldnt",text)
@@ -171,9 +219,11 @@ def spelling_is_fun(text):
     re.sub("shouldn$","shouldnt",text)
     re.sub("isn$","isnt",text)
     re.sub("hadn$","hadn't",text)
-    #this one also appears as "couselling" so need to use regex
+    
+    # This one also appears as "couselling" so need to use regex
     re.sub('^couse$','course',text)
-    #additional ones the need to be exact matches as they occur validly within other words
+    
+    # Additional ones the need to be exact matches as they occur validly within other words
     re.sub('^tho$','though',text)
     re.sub('^cours$','course',text)
     re.sub('^grate$','great',text)
