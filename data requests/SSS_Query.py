@@ -10,22 +10,39 @@ import re
 # helper function for new survey_query. runs much faster then .apply
 # also wide version with for loop of columns is faster than doing on values column of melted df. no idea why though.
 
-def grouped_wm(data, variables, weight_var, grouper):
+def grouped_wm(data, variables, weight_var, grouper, count_type=None):
 
     results = []
+    counts = []
     for value_col in variables:
 
         data['product'] = data[value_col] * data[weight_var]
-        data['weighted_mean'] = data[weight_var].where(~data['product'].isnull())
+        data['weights_filtered'] = data[weight_var].where(~data['product'].isnull())
         grouped = data.groupby(grouper, sort=False).sum()
-        result = grouped['product'] / grouped['weighted_mean']
+        result = grouped['product'] / grouped['weights_filtered']
         result.name = value_col
         results.append(result)
-    data = pd.concat(results, axis=1) if len(results) > 1 else results[0]
-    return data
+
+        if count_type == 'N_weighted':
+
+            numerators = grouped['product']
+            numerators.name = value_col
+            counts.append(numerators)
+
+        elif count_type == 'D_weighted':
+
+            denominators = grouped['weights_filtered']
+            denominators.name = value_col
+            counts.append(denominators)
+
+    data = pd.concat(results, axis=1) if len(results) > 1 else results[0].to_frame()
+
+    if (count_type == 'N_weighted') | (count_type == 'N_weighted'):
+        counts = pd.concat(counts, axis=1) if len(results) > 1 else counts[0].to_frame()
+    return data, counts
 # %%
 
-def Survey_query(data,survey='s',variables=[], grouper=[], count_type=None,supress_lowN=5,yearlast=False,rounded=False,combine_years=False,unweighted=False,force_weight=False, weight_var='WEIGHT', year_var='SurveyYear'):
+def Survey_query(data,survey='s',variables=[], grouper=[], count_type=None, supress_lowN=5,yearlast=False,rounded=False,combine_years=False,unweighted=False,force_weight=False, weight_var='WEIGHT', year_var='SurveyYear',low_N=5):
 
     # set survey-dependent variables. Weight and year default to combined student dataset versions, overrides if employer selected.
     # might be computationally slower, but more user friendly to just specify 'e', not two different variable names.
@@ -86,15 +103,27 @@ def Survey_query(data,survey='s',variables=[], grouper=[], count_type=None,supre
 
     #weighted version    
     else: 
-       result = grouped_wm(data, variables, weight_var, grouper)
+       result, counts = grouped_wm(data, variables, weight_var, grouper, count_type)
 
     # suppress results with low N 
-    counts = data.groupby(grouper, sort=False).count()
-    low_n_indeces = counts[result.columns.values] < 5
+    n = data.groupby(grouper, sort=False).count()
+    low_n_indeces = n[result.columns.values] < low_N
     result[low_n_indeces] = np.nan
 
     # rounding
     if rounded == True:
         result = round(result*100,1)
+
+    # add counts
+    if count_type == 'N':
+        numerators = data.groupby(grouper, sort=False).sum()
+        result = pd.merge(result,numerators[result.columns.values],left_index=True,right_index=True,suffixes=['_result','_count'])
+
+    elif count_type == 'D':
+        result = pd.merge(result,n[result.columns.values],left_index=True,right_index=True,suffixes=['_result','_count'])
+
+    # other kinds of counts already produced in helper function and saved in the counts variable
+    elif count_type is not None:
+        result = pd.merge(result,counts[result.columns.values],left_index=True,right_index=True,suffixes=['_result','_count'])
 
     return result
