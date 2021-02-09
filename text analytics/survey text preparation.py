@@ -97,9 +97,7 @@ def remove_names_nested_list(nested_list,namelist):
     
 def spelling_is_fun(text):
 # fix common spelling errors  
-    # str.replace is reportedly faster than re.sub 
-    # and since this runs on tokens rather than full verbatims,
-    # there's no need for additional functionality of regex
+    # str.replace is reportedly faster than re.sub
     text = text.replace('accessable','accessible')
     text = text.replace('accomod','accommod')
     text = text.replace('allways','always')
@@ -123,9 +121,6 @@ def spelling_is_fun(text):
     text = text.replace('coure','course')
     
     text = text.replace('definately','definitely')
-    text = text.replace('dissappoint','disappoint')
-    text = text.replace('dissapoint','disappoint')
-    text = text.replace('disapoint','disappoint')
     
     text = text.replace("educaters'","teachers")
     text = text.replace("enroll","enrol")
@@ -197,7 +192,7 @@ def spelling_is_fun(text):
     text = text.replace('trainn','train')
     text = text.replace('traner','trainer')
     text = text.replace('traning','training')
-    text = text.replace('trainor','teacher')
+    text = text.replace('trainor','trainer')
     
     text = text.replace('untill','until')
 
@@ -210,15 +205,22 @@ def spelling_is_fun(text):
     
     # use regex library for recognising patterns
     # these crop up presumably where people use something other than '
-    re.sub("didn$","didnt",text)
-    re.sub("wasn$","wasnt",text)
+    
     re.sub("couldn$","couldnt",text)
-    re.sub("wouldn$","wouldnt",text)
-    re.sub("weren$","werent",text)
-    re.sub("doesn$","doesnt",text)
-    re.sub("shouldn$","shouldnt",text)
-    re.sub("isn$","isnt",text)
+
+    re.sub("didn$","didnt",text)
+    re.sub("^dis[a-z]+point", "disappoint", "disapppoint")
+    re.sub("doesn$","doesnt",text)  
+    
     re.sub("hadn$","hadn't",text)
+    
+    re.sub("isn$","isnt",text)
+    
+    re.sub("shouldn$","shouldnt",text)
+    
+    re.sub("wasn$","wasnt",text)
+    re.sub("weren$","werent",text)
+    re.sub("wouldn$","wouldnt",text)
     
     # This one also appears as "couselling" so need to use regex
     re.sub('^couse$','course',text)
@@ -235,7 +237,7 @@ def spelling_is_fun(text):
     return(text)
 
 def synonyms_are_noise(text):
-#standardize similar words
+# Standardize similar words
     text = text.replace('trainer','teacher')
     text = text.replace('occupation','work')
     text = text.replace('job','work')
@@ -244,8 +246,9 @@ def synonyms_are_noise(text):
     
     return(text)
 
-#these are the custom lists of stopwords I've been using. The functions are written so any list can be used though.
-#lists of stopwords
+# These are the custom lists of stopwords I've been using. 
+# The functions are written so any list can be used though.
+# lists of stopwords
 duds = ['and','the','am','to','i','did','has','a','me','was','of','course','in','it','for','course','my','with','is','they','that','this','are','have','you','as','because','had',"ive",'on','at','be','all','would','there','from','very','were','get','so','we','do','or','if','an','about','or','when','which','also','t','really','very','s','he','she','his','her','our','them','we','their','u','l',"im",'by','box_hill','kangan','holmesglen','melbourne_polytechnic','mcie','swtafe','aie','rmit','chisholm','wyndham','mwt','ctm','mfi','coonara','seda','seymour','moe','southwest','knight','swinburn','tbm','bawm','objective','primary','who','will','more','less','can','how','make','should','these','just','it','is','it_is','need',"dont",'into','may','some','what','then','than','etc','could','nothing']
 #this one includes additional list of sentiment words
 duds_plus_sent = duds + ['no','not','but','good','great','excellent','teacher','happy','love','fantastic','thanks','like','best','bad','poor','great','excellent','love','good','disappoint','disappointed','terrible','wonderful','brilliant','unhappy','enjoy','amazing','terrific']
@@ -254,8 +257,9 @@ duds_plus_sent = dict.fromkeys(duds_plus_sent, True)
 duds= dict.fromkeys(duds, True)
 
 def penn2morphy(penntag):
-#this was taken from the web to match up ntlk's built in POS tagger results with those required by the lemmatizer function.
-#I modified it to take in a broader list of tags.
+# this was taken from the web to match up ntlk's built in POS tagger results 
+# with those required by the lemmatizer function.
+# I modified it to take in a broader list of tags.
     """ Converts Penn Treebank tags to WordNet. """
     morphy_tag = {'NN':'n','NNS':'n','NNP':'n','NNPS':'n', 'JJ':'a',
                   'JJR':'a','JJS':'a','VB':'v','VBD':'v','VBG':'v','VBN':'v','VBP':'v','VBZ':'v', 'RB':'r', 'RBR':'r', 'RBS':'r'}
@@ -266,17 +270,20 @@ def penn2morphy(penntag):
 
 
 def get_lemmatized_text(text):
-#lemmatizer for pos tagged text
+# lemmatizer for pos tagged text
     from nltk.stem import WordNetLemmatizer
+
     lemmatizer = WordNetLemmatizer()
+    
     return [[lemmatizer.lemmatize(word, pos=penn2morphy(tag)) 
             for word, tag in sentence] for sentence in text]
 
 
 def lemmatize_list(text_list):
-#lemmatize lists of untagged word tokens.
-# I made this for when I'm doing this on its own, not in the prepare_text function e.g. when making wordclouds.
-    #add POS tags
+# lemmatize lists of untagged word tokens.
+# I made this for when I'm doing this on its own, 
+# not in the prepare_text function e.g. when making wordclouds.
+    # add POS tags
     from nltk import pos_tag
     tagged = pos_tag(text_list) 
 
@@ -292,7 +299,7 @@ def make_bigrams_sentences(text) :
     text = [bigram_mod[sentence] for sentence in text]
     return text
 
-#Prepare text for topic modelling. 
+# Prepare text for topic modelling. 
 # This replaces synonyms and mispelled words, lemmatizes text and removes stopwords and numerals. Specifiy text as a list of sentences which are themselves lists of words, and a list of stopwords.
 def prepare_text(df, colname, stops, min_length=1):
     #remove NAs and split into tokens
@@ -320,7 +327,8 @@ def prepare_text(df, colname, stops, min_length=1):
     return no_stops
 
 
-#the functions below take the output from prepare_text and create a gensim dictionary and corpus which are the inputs for gensim's LDA model.
+# the functions below take the output from prepare_text and create 
+# a gensim dictionary and corpus which are the inputs for gensim's LDA model.
 
 def prep_for_LDA(textlist):
     #create dictionary and corpus from initial data (tokens as nested lists- i.e. output from prepare_text ).
