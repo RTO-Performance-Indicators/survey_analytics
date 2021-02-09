@@ -116,7 +116,7 @@ def Survey_query(data,survey='s',variables=[], grouper=[], count_type=None, supr
 
     # add counts
     if count_type == 'N':
-        numerators = data.groupby(grouper, sort=False).sum()
+        numerators = data.groupby(grouper, sort=False).count()
         result = pd.merge(result,numerators[result.columns.values],left_index=True,right_index=True,suffixes=['_result','_count'])
 
     elif count_type == 'D':
