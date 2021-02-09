@@ -16,7 +16,7 @@ def grouped_wm(data, variables, weight_var, grouper, count_type=None):
     counts = []
     for value_col in variables:
 
-        data['product'] = data[value_col] * data[weight_var]
+        data['product'] = data[value_col].values * data[weight_var].values
         data['weights_filtered'] = data[weight_var].where(~data['product'].isnull())
         grouped = data.groupby(grouper, sort=False).sum()
         result = grouped['product'] / grouped['weights_filtered']
@@ -37,7 +37,7 @@ def grouped_wm(data, variables, weight_var, grouper, count_type=None):
 
     data = pd.concat(results, axis=1) if len(results) > 1 else results[0].to_frame()
 
-    if (count_type == 'N_weighted') | (count_type == 'N_weighted'):
+    if (count_type == 'N_weighted') | (count_type == 'D_weighted'):
         counts = pd.concat(counts, axis=1) if len(results) > 1 else counts[0].to_frame()
     return data, counts
 # %%
