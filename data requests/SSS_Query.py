@@ -34,20 +34,22 @@ def grouped_wm(data, variables, weight_var, grouper, count_type=None):
             denominators = grouped['weights_filtered']
             denominators.name = value_col
             counts.append(denominators)
-
-    data = pd.concat(results, axis=1) if len(results) > 1 else results[0].to_frame()
+    data.drop(columns=['product','weights_filtered'],inplace=True)
+    results = pd.concat(results, axis=1) if len(results) > 1 else results[0].to_frame()
 
     if (count_type == 'N_weighted') | (count_type == 'D_weighted'):
         counts = pd.concat(counts, axis=1) if len(results) > 1 else counts[0].to_frame()
-    return data, counts
+    return results, counts
 # %%
 
-def Survey_query(data,survey='s',variables=[], grouper=[], count_type=None, supress_lowN=5,yearlast=False,rounded=False,combine_years=False,unweighted=False,force_weight=False, weight_var='WEIGHT', year_var='SurveyYear',low_N=5):
+def Survey_query(data,survey='s',variables=[], grouper=None, count_type=None, yearlast=False,rounded=False,combine_years=False,unweighted=False,force_weight=False, weight_var='WEIGHT', year_var='SurveyYear',low_N=5):
 
     # set survey-dependent variables. Weight and year default to combined student dataset versions, overrides if employer selected.
     # might be computationally slower, but more user friendly to just specify 'e', not two different variable names.
     # custom variable names for other datasets can be fed in as arguments and won't be changed unless survey argument is set to 'e'
-    
+    if grouper is None:
+        grouper = []
+
     if survey == 's':
         # do unweighted if data fitered to only one rto
         # this is idiot proofing so even if the default weighted version is used, rto level data will only be weighted if you set force_weight to True
