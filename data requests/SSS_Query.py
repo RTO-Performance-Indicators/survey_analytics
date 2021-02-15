@@ -42,14 +42,98 @@ def grouped_wm(data, variables, weight_var, grouper, count_type=None):
     return results, counts
 # %%
 
-def Survey_query(data,survey='s',variables=[], grouper=None, count_type=None, yearlast=False,rounded=False,combine_years=False,unweighted=False,force_weight=False, weight_var='WEIGHT', year_var='SurveyYear',low_N=5):
+# helper function for calculating percentages of each value for categorical variables. 
+# Way slower than main version as it loops through each value, but still 10x faster than old function for categorical vars.
+
+def cat_grouped_wm(data, cat_vars, weight_var, grouper,NA_values,count_type,unweighted, low_N):
+    cat_results = []
+    cat_counts = []
+    cat_varnames = []
+
+    
+    for value_col in cat_vars:
+
+        # create array of relevant values and remove those specified as NAs
+        values = data[value_col].unique()
+        values = set(values) - set(NA_values)
+
+        # create binary column for each value
+        for y in values:
+            cat_varnames.insert(len(cat_varnames),(value_col + str(y)))
+            data[value_col + str(y)] = np.where(data[value_col] == y,1,0)
+            data.loc[(data[value_col].isin(NA_values)) |  (data[value_col].isna()),value_col + str(y)] = np.nan
+
+            #weighted calc by each relevant value    
+            if unweighted == False: 
+
+                data['product'] = data[value_col + str(y)].where(~data[value_col].isin(NA_values)).values * data[weight_var].where(~data[value_col].isin(NA_values)).values
+                data['weights_filtered'] = data[weight_var].where(~data['product'].isnull())
+                grouped = data.groupby(grouper, sort=False).sum()
+                result = grouped['product'] / grouped['weights_filtered']
+                result.name = value_col + str(y)
+                cat_results.append(result)
+
+                if count_type == 'N_weighted':
+                    numerators = grouped['product']
+                    numerators.name = value_col + str(y)
+                    cat_counts.append(numerators)
+
+        if count_type == 'D_weighted':
+            cat_count = grouped['weights_filtered']
+            cat_count.name = value_col + 'count'
+            cat_counts.append(cat_count)
+
+    # join all counts if weighted denominators produced        
+    
+
+    # tidy up results
+    if unweighted == False: 
+        data.drop(columns=['product','weights_filtered'],inplace=True)
+        cat_results = pd.concat(cat_results, axis=1) if len(cat_results) > 1 else cat_results[0].to_frame()
+    
+    # unweighted calc done on all cols at once
+    else:
+        # do an unweighted version    
+        cat_results = data[cat_varnames + grouper].groupby(grouper,sort=False).mean()
+
+    # suppress results with low N 
+    n = data.groupby(grouper, sort=False).count()
+    low_n_indeces = n[cat_results.columns.values] < low_N
+    cat_results[low_n_indeces] = np.nan
+    
+    # add counts
+    if (count_type == 'D_weighted') | (count_type == 'N_weighted'):       
+        cat_counts = pd.concat(cat_counts, axis=1) if len(cat_results) > 1 else cat_results[0].to_frame()
+    elif (count_type == 'N'):
+        cat_counts = data[cat_varnames + grouper].groupby(grouper,sort=False).sum()
+    elif (count_type == 'D'):
+        cat_counts = n[cat_vars]
+
+    if count_type is not None:
+        cat_results = pd.merge(cat_results,cat_counts,left_index=True,right_index=True,suffixes=['_result','_count'])
+
+    # sort columns so they're not just in the order the values first appear
+    cat_results.reindex(columns=sorted(cat_results.columns))
+
+    return cat_results
+# %%
+
+def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, count_type=None, yearlast=False,rounded=False,combine_years=False,
+                unweighted=False,force_weight=False, weight_var='WEIGHT', year_var='SurveyYear',low_N=5,NA_values=None):
+
+    # these are expected to be lists later on, so if not specificed change to empty lists
+    if grouper is None:
+        grouper = []
+
+    if cat_vars is None:
+        cat_vars = []
+
+    if variables is None:
+        variables = []
 
     # set survey-dependent variables. Weight and year default to combined student dataset versions, overrides if employer selected.
     # might be computationally slower, but more user friendly to just specify 'e', not two different variable names.
     # custom variable names for other datasets can be fed in as arguments and won't be changed unless survey argument is set to 'e'
-    if grouper is None:
-        grouper = []
-
     if survey == 's':
         # do unweighted if data fitered to only one rto
         # this is idiot proofing so even if the default weighted version is used, rto level data will only be weighted if you set force_weight to True
@@ -85,7 +169,6 @@ def Survey_query(data,survey='s',variables=[], grouper=None, count_type=None, ye
         grouper.insert(0,'group_dummy')
         
     # filter data to relevant columns and valid values only
-
     columns = data[variables]    
     # replace invalid values with nan.
     columns.mask((columns <0) | (columns >5),np.nan,inplace=True)
@@ -95,13 +178,15 @@ def Survey_query(data,survey='s',variables=[], grouper=None, count_type=None, ye
     # create list of other columns we need (grouping and weight)
     cols = grouper.copy()
     cols.append(weight_var)
+    cols = cols + cat_vars
+
     # merge cleaned columns with grouping variables and weights. Indexes match as they're from the same df to start with.
     data = pd.merge(columns,data[cols],left_index=True,right_index=True)
         
     # unweighted version
     if unweighted == True:
         data.drop(columns=weight_var,inplace=True)
-        result = data.groupby(grouper,sort=False).mean()
+        result = data[variables + grouper].groupby(grouper,sort=False).mean()
 
     #weighted version    
     else: 
@@ -112,20 +197,27 @@ def Survey_query(data,survey='s',variables=[], grouper=None, count_type=None, ye
     low_n_indeces = n[result.columns.values] < low_N
     result[low_n_indeces] = np.nan
 
+    if cat_vars != []:
+    # calculate results for categorical variables
+        cat_result = cat_grouped_wm(data,cat_vars,weight_var,grouper,NA_values,count_type,unweighted,low_N)
+        result = pd.merge(result,cat_result,left_index=True,right_index=True)
+
     # rounding
     if rounded == True:
         result = round(result*100,1)
 
     # add counts
     if count_type == 'N':
-        numerators = data.groupby(grouper, sort=False).sum()
+        numerators = data[variables + grouper].groupby(grouper, sort=False).sum()
         result = pd.merge(result,numerators[result.columns.values],left_index=True,right_index=True,suffixes=['_result','_count'])
 
     elif count_type == 'D':
-        result = pd.merge(result,n[result.columns.values],left_index=True,right_index=True,suffixes=['_result','_count'])
+        result = pd.merge(result,n[variables],left_index=True,right_index=True,suffixes=['_result','_count'])
 
     # other kinds of counts already produced in helper function and saved in the counts variable
     elif count_type is not None:
-        result = pd.merge(result,counts[result.columns.values],left_index=True,right_index=True,suffixes=['_result','_count'])
-
+        result = pd.merge(result,counts[variables],left_index=True,right_index=True,suffixes=['_result','_count'])
+    
+    # sort rows
+    result.sort_index(inplace=True)
     return result
