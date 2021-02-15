@@ -208,6 +208,7 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
 
     # add counts
     if count_type == 'N':
+        
         numerators = data[variables + grouper].groupby(grouper, sort=False).sum()
         result = pd.merge(result,numerators[result.columns.values],left_index=True,right_index=True,suffixes=['_result','_count'])
 
@@ -216,8 +217,10 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
 
     # other kinds of counts already produced in helper function and saved in the counts variable
     elif count_type is not None:
+
         result = pd.merge(result,counts[variables],left_index=True,right_index=True,suffixes=['_result','_count'])
     
     # sort rows
     result.sort_index(inplace=True)
     return result
+
