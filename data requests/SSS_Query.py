@@ -182,43 +182,46 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
 
     # merge cleaned columns with grouping variables and weights. Indexes match as they're from the same df to start with.
     data = pd.merge(columns,data[cols],left_index=True,right_index=True)
+
+    if variables != []:      
+        # unweighted version
+        if unweighted == True:
+            data.drop(columns=weight_var,inplace=True)
+            result = data[variables + grouper].groupby(grouper,sort=False).mean()
+
+        #weighted version    
+        else: 
+            result, counts = grouped_wm(data, variables, weight_var, grouper, count_type)
+
+        # suppress results with low N 
+        n = data.groupby(grouper, sort=False).count()
+        low_n_indeces = n[result.columns.values] < low_N
+        result[low_n_indeces] = np.nan
+
+        # add counts
+        if count_type == 'N':
         
-    # unweighted version
-    if unweighted == True:
-        data.drop(columns=weight_var,inplace=True)
-        result = data[variables + grouper].groupby(grouper,sort=False).mean()
+            numerators = data[variables + grouper].groupby(grouper, sort=False).sum()
+            result = pd.merge(result,numerators[result.columns.values],left_index=True,right_index=True,suffixes=['_result','_count'])
 
-    #weighted version    
-    else: 
-       result, counts = grouped_wm(data, variables, weight_var, grouper, count_type)
+        elif count_type == 'D':
+            result = pd.merge(result,n[variables],left_index=True,right_index=True,suffixes=['_result','_count'])
 
-    # suppress results with low N 
-    n = data.groupby(grouper, sort=False).count()
-    low_n_indeces = n[result.columns.values] < low_N
-    result[low_n_indeces] = np.nan
+        # other kinds of counts already produced in helper function and saved in the counts variable
+        elif count_type is not None:
+            result = pd.merge(result,counts[variables],left_index=True,right_index=True,suffixes=['_result','_count'])
 
     if cat_vars != []:
     # calculate results for categorical variables
         cat_result = cat_grouped_wm(data,cat_vars,weight_var,grouper,NA_values,count_type,unweighted,low_N)
-        result = pd.merge(result,cat_result,left_index=True,right_index=True)
+        if variables != []:
+            result = pd.merge(result,cat_result,left_index=True,right_index=True)
+        else:
+            result = cat_result
 
     # rounding
     if rounded == True:
         result = round(result*100,1)
-
-    # add counts
-    if count_type == 'N':
-        
-        numerators = data[variables + grouper].groupby(grouper, sort=False).sum()
-        result = pd.merge(result,numerators[result.columns.values],left_index=True,right_index=True,suffixes=['_result','_count'])
-
-    elif count_type == 'D':
-        result = pd.merge(result,n[variables],left_index=True,right_index=True,suffixes=['_result','_count'])
-
-    # other kinds of counts already produced in helper function and saved in the counts variable
-    elif count_type is not None:
-
-        result = pd.merge(result,counts[variables],left_index=True,right_index=True,suffixes=['_result','_count'])
     
     # sort rows
     result.sort_index(inplace=True)
