@@ -138,11 +138,13 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
         # do unweighted if data fitered to only one rto
         # this is idiot proofing so even if the default weighted version is used, rto level data will only be weighted if you set force_weight to True
         if (len(data['TOID'].unique()) == 1) & (force_weight==False):
+            print('ONLY ONE RTO DETECTED, UNWEIGHTED CALCULATIONS PRODUCED')
             unweighted = True   
 
     elif survey == 'e':
         # do unweighted if data fitered to only one rto
         if len(data['e_toid'].unique()) == 1 & (force_weight==False):
+            print('ONLY ONE RTO DETECTED, UNWEIGHTED CALCULATIONS PRODUCED')
             unweighted = True
         # set weight and year vars
         year_var = 'year'
@@ -151,6 +153,7 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
     # do unweighted if grouped by rto (same reason as above)
 
     if (any(item in grouper for item in ['TOID','RTOName','RTOTradingName','e_toid','rtoname','e_rto_name'])) & (force_weight==False):
+        print('ONLY ONE RTO DETECTED, UNWEIGHTED CALCULATIONS PRODUCED')
         unweighted = True
 
     # add survey year to grouping variables in appropriate location
