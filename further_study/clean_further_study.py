@@ -324,6 +324,13 @@ def fix_community(string):
 
     return(string)
 
+def fix_cybersecurity(string):
+    string = str(string)
+
+    string = re.sub(pattern = '^cybersecurity*', repl = 'cyber security', string = string)
+
+    return(string)
+
 def fix_ecec(string):
     string = str(string)
     
@@ -500,6 +507,7 @@ def fix_spelling(string):
     string = re.sub(pattern = 'electrotech[a-z]*', repl = 'electrotechnology', string = string)
     string = re.sub(pattern = 'genural', repl = 'general', string = string)
     string = re.sub(pattern = 'gereral', repl = 'general', string = string)
+    string = re.sub(pattern = '^inf[a-z]+tion$', repl = 'information', string = string)
     string = re.sub(pattern = 'infrastucture', repl = 'infrastructure', string = string)
     string = re.sub(pattern = 'litracy', repl = 'literacy', string = string)
     string = re.sub(pattern = 'machanic', repl = 'mechanic', string = string)
@@ -510,6 +518,7 @@ def fix_spelling(string):
     string = re.sub(pattern = 'preapp[a-z]*', repl = 'pre-apprenticeship', string = string)
 
     string = re.sub(pattern = 'supoport', repl = 'support', string = string)
+    string = re.sub(pattern = '^tech[a-z]+gy$', repl = 'technology', string = string)
     string = re.sub(pattern = 'work ed[a-z]*', repl = 'work education', string = string)
     string = re.sub(pattern = 'writen', repl = 'written', string = string)
     
@@ -814,6 +823,7 @@ def fix_fs_name_v(dataframe, id = 'SurveyResponseID', col = 's_fs_name_v'):
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_ecec)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_aged_care)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_child_intervention)
+    df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_cybersecurity)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_health_services)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_nursing)
     df_fixed['s_fs_name_v_fixed'] = df_fixed['s_fs_name_v_fixed'].apply(fix_light_vehicle_mech)
@@ -843,8 +853,8 @@ fs = pd.merge(df, fs, how = 'left', left_on = join_cols, right_on = join_cols)
 # SECTION 2 - REPLACE COURSE NAME USING COURSE CODES SUPPLIED IN VERBATIM
 
 # Load and superseded course concordances
-superseded = pd.read_excel('S:/TMIPU/Info Library/ISA Data & Information/Superseded Mappings/TGA Superseded Mappings - July 2020 - All courses.xlsx',
-                            sheet_name = 'With 1 allocation only')
+superseded = pd.read_excel('S:/TMIPU/Info Library/ISA Data & Information/Superseded Mappings/TGA Superseded Mappings - December 2020 - All courses.xlsx',
+                            sheet_name = 'Only 1 allocation')
 superseded['LatestCourseTitle'] = superseded['LatestCourseTitle'].str.lower()
 
 # Not all extracted verbatim course codes are valid course codes, such as 2019 and 2020
@@ -869,7 +879,11 @@ fs_merged['s_fs_name_v'] = fs_merged.apply(lambda x: '' if pd.isna(x['s_fs_name_
 fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('edu')]
 fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('diploma of advanced diploma')]
 
+fs_merged[(fs_merged['SupercededCourseID'] == '22334VIC') & (fs_merged['s_fs_lev'] > 0)]
     
+# At [an RTO]
+fs[fs['s_fs_name_v_fixed'].str.match('[a-z ]+ at [a-z]+')]
+
 fs_merged[fs_merged['s_fs_name_v_fixed'] == 'diploma of advanced']
 fs_merged[fs_merged['s_fs_name_v_fixed'].str.contains('certificate i in in')][['s_fs_name_v', 'level_description', 's_fs_name_v_fixed']]
 
