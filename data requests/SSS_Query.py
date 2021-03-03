@@ -153,7 +153,7 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
     # do unweighted if grouped by rto (same reason as above)
 
     if (any(item in grouper for item in ['TOID','RTOName','RTOTradingName','e_toid','rtoname','e_rto_name'])) & (force_weight==False):
-        print('ONLY ONE RTO DETECTED, UNWEIGHTED CALCULATIONS PRODUCED')
+        print('GROUPED BY RTO, UNWEIGHTED CALCULATIONS PRODUCED')
         unweighted = True
 
     # add survey year to grouping variables in appropriate location
