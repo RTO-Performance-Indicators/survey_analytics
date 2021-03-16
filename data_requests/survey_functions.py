@@ -1,9 +1,8 @@
+import pandas as pd
+import numpy as np
 
 
 def calc_prop(df, group_vars = [], vars = [], weighted = True):
-
-    import pandas as pd
-    import numpy as np
 
     id_vars = group_vars.copy()
 

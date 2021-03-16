@@ -1,7 +1,13 @@
+# https://docs.python.org/3.8/library/unittest.html
+
 import pandas as pd
 import numpy as np
 import unittest
-from data_requests import functions # Andrew's code TODO: Rename python file name
+
+import data_requests.survey_functions
+
+
+# from data_requests import functions
 
 # Create dummy data for testing purposes
 data = pd.DataFrame({
@@ -19,22 +25,21 @@ toid_output = pd.DataFrame({
 })
 
 class Tests(unittest.TestCase):
+    
     # Define tests and expected outputs
-    def test_function():
-        assert sum([1, 2]) == 3, 'message on error'
+    def test_function(self):
+        self.assertEqual(sum([1, 2]), 3)
 
     # Andrew's version of function
-    def test_calc_prop():
-        output = functions.calc_prop(df=data, group_vars=['TOID'], vars=['Measure1'], weighted=False)
-        assert output.equals(toid_output), 'calc_prop did not provide the right output'
+    def test_calc_prop(self):
+        output = data_requests.survey_functions.calc_prop(df=data, group_vars=['TOID'], vars=['Measure1'], weighted=False)
+        
+        self.assertTrue(output.equals(toid_output))
 
 # def test_supressions():
 
 # def test_weighting():
 
-
-# Speed tests?
-
 # Run these tests on running this python script
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
