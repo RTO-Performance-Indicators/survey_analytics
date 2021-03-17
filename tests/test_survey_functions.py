@@ -4,10 +4,8 @@ import pandas as pd
 import numpy as np
 import unittest
 
-import data_requests.survey_functions
+from data_requests.survey_functions import calc_prop
 
-
-# from data_requests import functions
 
 # Create dummy data for testing purposes
 data = pd.DataFrame({
@@ -27,12 +25,14 @@ toid_output = pd.DataFrame({
 class Tests(unittest.TestCase):
     
     # Define tests and expected outputs
+
+    # Example test
     def test_function(self):
         self.assertEqual(sum([1, 2]), 3)
 
     # Andrew's version of function
     def test_calc_prop(self):
-        output = data_requests.survey_functions.calc_prop(df=data, group_vars=['TOID'], vars=['Measure1'], weighted=False)
+        output = calc_prop(df=data, group_vars=['TOID'], vars=['Measure1'], weighted=False)
         
         self.assertTrue(output.equals(toid_output))
 
@@ -40,6 +40,7 @@ class Tests(unittest.TestCase):
 
 # def test_weighting():
 
+# Must remain at the bottom of this script
 # Run these tests on running this python script
 if __name__ == '__main__':
     unittest.main(verbosity=2)
