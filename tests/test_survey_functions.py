@@ -22,6 +22,12 @@ toid_output = pd.DataFrame({
     'N': [5, 2]
 })
 
+state_output = pd.DataFrame({
+    'variable': ['Measure1'],
+    'proportion': [0.5],
+    'N': [7]
+})
+
 class Tests(unittest.TestCase):
     
     # Define tests and expected outputs
@@ -31,14 +37,16 @@ class Tests(unittest.TestCase):
         self.assertEqual(sum([1, 2]), 3)
 
     # Andrew's version of function
-    def test_calc_prop(self):
+    def test_toid_output(self):
         output = calc_prop(df=data, group_vars=['TOID'], vars=['Measure1'], weighted=False)
         
         self.assertTrue(output.equals(toid_output))
 
-# def test_supressions():
+    def test_state_output(self):
+        output = calc_prop(df=data, vars=['Measure1'], weighted=True)
 
-# def test_weighting():
+        self.assertTrue(output.equals(state_output))
+
 
 # Must remain at the bottom of this script
 # Run these tests on running this python script
