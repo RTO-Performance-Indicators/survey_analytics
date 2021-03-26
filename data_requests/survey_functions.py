@@ -1,17 +1,17 @@
 import pandas as pd
 import numpy as np
 
-def calc_prop(df, group_vars=[], vars=[], min_n=5, weighted=True):
+def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True):
 
     # Take copies of lists to avoid modifying global/environment variables
-    id_vars = group_vars.copy()
+    group_vars = groups.copy()
     calc_vars = vars.copy()
 
     if weighted == True:
-        id_vars.append('WEIGHT')
+        group_vars.append('WEIGHT')
 
     # Survey data is tidy; convert to long format
-    long = pd.melt(df, id_vars=id_vars, value_vars=calc_vars)
+    long = pd.melt(df, id_vars=group_vars, value_vars=calc_vars)
 
     # Remove invalid values (i.e. -888/-999 for unanswered/unpresented)
     long = long[(long['value'] >= 0) & (long['value'] <= 5)]
@@ -22,7 +22,7 @@ def calc_prop(df, group_vars=[], vars=[], min_n=5, weighted=True):
         'value' : [0, 1, 2, 3, 4, 5], 
         'binary': [0, 1, 1, 0, 0, 0]
     })
-    long = pd.merge(long, likert_to_binary)
+    long = pd.merge(long, likert_to_binary, how='left')
 
     # Conversion to long format gathers measure name into a column, 'variable'
     # 'variable' column needs to be added as a grouping variable
@@ -33,18 +33,31 @@ def calc_prop(df, group_vars=[], vars=[], min_n=5, weighted=True):
         long.groupby(group_vars)
         .apply(lambda x: len(x['value']))
         .reset_index()
-        .rename(columns = {0: 'N'})
+        .rename(columns={0: 'N'})
     )
     
     # Calculate proportion, depending if weighting is required
     if weighted == True:
-        prop = long.groupby(group_vars).apply(lambda x: sum(x['binary'] * x['WEIGHT']) / sum(x['WEIGHT'])).reset_index().rename(columns = {0: 'proportion'})
+        prop = (
+            long.groupby(group_vars)
+            .apply(lambda x: sum(x['binary'] * x['WEIGHT']) / sum(x['WEIGHT']))
+            .reset_index()
+            .rename(columns={0: 'proportion'})
+        )
     else:
-        prop = long.groupby(group_vars).apply(lambda x: sum(x['binary']) / len(x['value'])).reset_index().rename(columns = {0: 'proportion'})
+        prop = (
+            long.groupby(group_vars)
+            .apply(lambda x: sum(x['binary']) / len(x['value']))
+            .reset_index()
+            .rename(columns={0: 'proportion'})
+        )
 
     result_long = pd.merge(prop, n)
 
-    result_long['proportion'] = result_long.apply(lambda x: np.nan if x['N'] < min_n else x['proportion'], axis = 1)
+    result_long['proportion'] = (
+        result_long
+        .apply(lambda x: np.nan if x['N'] < min_n else x['proportion'], axis=1)
+    )
 
     return(result_long)
 
@@ -53,4 +66,7 @@ data = pd.read_csv('../data/test.csv')
 
 data
 
-calc_prop(df=data, group_vars=['TOID'], vars=['Measure'], weighted=False)
+groups = ['TOID']
+measures = ['Measure']
+
+calc_prop(df=data, groups=groups, vars=measures, weighted=False)
