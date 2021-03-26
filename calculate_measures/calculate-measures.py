@@ -4,7 +4,7 @@ import numpy as np
 # set this to get rid of warnings for setting on a slice of copy (which is the desired behaviour here)
 pd.options.mode.chained_assignment = None
 
-def calc_multi_measure(df,components,output_name):
+def calc_multi_measure(df,components,output_name,preserve_NA=True):
     ''' Calculates a survey measure based on multiple components
 
     Calculates performance measures based on having no negative outcomes in
@@ -17,6 +17,7 @@ def calc_multi_measure(df,components,output_name):
         df (pandas dataframe): a dataframe with columns for each measure component
         components (list): a list with the column names from df for each component
         output_name (string): the desired name of the resulting series
+        preserve_NA (boolean): specifies whether to keep numerical NA values or replace with NaN
 
     Returns:
         A pandas series named output_name, the same length as the input 
@@ -24,15 +25,19 @@ def calc_multi_measure(df,components,output_name):
 
     '''
     # get neccesary columns
-    data = df[components]
+    data = df[components].copy()
 
     # replace NAs. 
-    data.mask((data <0) | (data >5),np.nan,inplace=True)
+    if preserve_NA == False:
+        # replace NAs. 
+        data.mask((data <0) | (data >5),np.nan,inplace=True)
+    else:
+        data.mask((data >5),-999,inplace=True)
 
     # make 5-point variables binary. 
     # Can't just use np.where because the NaNs would be evaluated and get changed to 1 or 0.
     data.replace(2,1,inplace=True)
-    data.mask((data > 2) ,0,inplace=True)
+    data.mask((data.isin([3,4,5])),0,inplace=True)
 
     # this logic is a bit backwards but very concise:
     # make measure equal to 1 by default
@@ -41,11 +46,14 @@ def calc_multi_measure(df,components,output_name):
     # technically this is also 
     data.loc[(data[components] == 0).any(1),output_name] = 0
     # change rows will ALL null to NaN
-    data.loc[data[components].isnull().all(1),output_name] = np.nan
+    if preserve_NA == False:
+        data.loc[data[components].isnull().all(1),output_name] = np.nan
+    else:
+        data.loc[(~data[components].isin([0,1])).all(1),output_name] = -999
 
     return(data[output_name])
 
-def calc_one_question_measure(df,colname,output_name):
+def calc_one_question_measure(df,colname,output_name,preserve_NA=True):
     ''' Calculates a survey measure based on one question.
 
     Calculates performance measures based on a question with responses
@@ -58,6 +66,7 @@ def calc_one_question_measure(df,colname,output_name):
         df (pandas dataframe): a dataframe with columns for each measure component
         colname (string): the name of the column in df with the input data
         output_name (string): the desired name of the resulting series
+        preserve_NA (boolean): specifies whether to keep numerical NA values or replace with NaN
 
     Returns:
         A pandas series named output_name, the same length as the input 
@@ -66,21 +75,26 @@ def calc_one_question_measure(df,colname,output_name):
     '''
 
      # get data
-    data = df[colname]
+    data = df[colname].copy()
 
     # replace NAs. 
-    data.mask((data <0) | (data >5),np.nan,inplace=True)
+    if preserve_NA == False:
+        # replace NAs. 
+        data.mask((data <0) | (data >5),np.nan,inplace=True)
+    else:
+        data.mask((data >5),-999,inplace=True)
 
     # make 5-point variables binary. 
     # Can't just use np.where because the NaNs would be evaluated and get changed to 1 or 0.
     data.replace(2,1,inplace=True)
-    data.mask((data > 2) ,0,inplace=True)
+    data.mask((data.isin([3,4,5])) ,0,inplace=True)
     # rename from input variable to output name
     data.rename(output_name,inplace=True)
 
     return(data)
 
-''' usage example
+''' usage example 
+(obviously you don't have to put these straight into the existing dataframe, just makes it easy to do a crosstab with src versions)
 
 # read in survey file
 file_path = '' # put the filepath here before running, suppressed here so the code can go on github without displaying S: drive structure
