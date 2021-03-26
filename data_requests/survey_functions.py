@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def calc_prop(df, group_vars = [], vars = [], weighted = True):
+def calc_prop(df, group_vars=[], vars=[], min_n=5, weighted=True):
 
     id_vars = group_vars.copy()
 
@@ -34,6 +34,6 @@ def calc_prop(df, group_vars = [], vars = [], weighted = True):
 
     result_long = pd.merge(prop, n)
 
-    result_long['proportion'] = result_long.apply(lambda x: np.nan if x['N'] < 5 else x['proportion'], axis = 1)
+    result_long['proportion'] = result_long.apply(lambda x: np.nan if x['N'] < min_n else x['proportion'], axis = 1)
 
     return(result_long)
