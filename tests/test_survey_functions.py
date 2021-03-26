@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import unittest
 
-from data_requests.survey_functions import calc_prop
+from data_requests import survey_functions
 
 
 # Create dummy data for testing purposes
@@ -38,7 +38,7 @@ class Tests(unittest.TestCase):
 
     # Andrew's version of function
     def test_toid_output(self):
-        output = calc_prop(df=data, group_vars=['TOID'], vars=['Measure1'], weighted=False)
+        output = survey_functions.calc_prop(df=data, group_vars=['TOID'], vars=['Measure1'], weighted=False)
         
         self.assertTrue(output.equals(toid_output))
 
