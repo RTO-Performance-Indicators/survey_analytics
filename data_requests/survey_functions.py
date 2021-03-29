@@ -35,7 +35,7 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True):
     group_vars.append('variable')
     
     # Calculate proportions and N
-    result_long = long.groupby(group_vars).apply(prop_n).compute()
+    result_long = long.groupby(group_vars).apply(prop_n)
 
     # Convert proportion to NA if N < min_n
     result_long.loc[result_long['N'] < min_n, 'proportion'] = np.nan
@@ -66,18 +66,18 @@ data = pd.DataFrame({
     'WEIGHT': [random.random() for i in range(size)]
 })
 
+data.set_index('TOID')
+
 import time
+groups = ['TOID']
+measures = ['Measure']
 calc_prop(df=data, groups=groups, vars=measures, weighted=False)
 timeit calc_prop(df=data, groups=groups, vars=measures, weighted=False)
 
-data = dask.dataframe({
-    'TOID': [random.randint(1, 3) for i in range(size)],
-    'Measure': [random.randint(0, 1) for i in range(size)],
-    'WEIGHT': [random.random() for i in range(size)]
-})
 
 import dask.dataframe as dd
 
-data = dd.from_pandas(data, npartitions=2)
+data2 = dd.from_pandas(data, npartitions=4)
 
-data
+data2
+
