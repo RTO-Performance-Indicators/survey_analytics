@@ -6,7 +6,8 @@ import dask.dataframe as dd
 def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True):
 
     # Take copies of lists to avoid modifying global/environment variables
-    group_vars = groups.copy()
+    group_vars1 = groups.copy()
+    group_vars2 = groups.copy()
     calc_vars = vars.copy()
 
     if weighted == True:
@@ -15,10 +16,10 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True):
         weights = [1] * len(df) # unweighted: all weights are equal to 1
     
     df['weight'] = weights
-    group_vars.append('weight') # keeps weights as separate column
+    group_vars1.append('weight') # keeps weights as separate column
 
     # Survey data is wide; convert to long format
-    long = pd.melt(df, id_vars=group_vars, value_vars=calc_vars)
+    long = pd.melt(df, id_vars=group_vars1, value_vars=calc_vars)
 
     # Remove invalid values (i.e. -888/-999 for unanswered/unpresented)
     long = long[(long['value'] >= 0) & (long['value'] <= 5)]
@@ -33,10 +34,10 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True):
 
     # Conversion to long format gathers measures into one column, 'variable'
     # 'variable' column needs to be added as a grouping variable
-    group_vars.append('variable')
+    group_vars2.append('variable')
     
     # Calculate proportions and N
-    result_long = long.groupby(group_vars).apply(prop_n)
+    result_long = long.groupby(group_vars2).apply(prop_n)
 
     # Convert proportion to NA if N < min_n
     result_long.loc[result_long['N'] < min_n, 'proportion'] = np.nan
@@ -51,11 +52,12 @@ def prop_n(x):
     return pd.Series(d, index=['proportion', 'N'])
 
 # Test
-# data = pd.read_csv('../data/test.csv')
+data = pd.read_csv('../data/test.csv')
 
-# groups = ['TOID']
-# measures = ['Measure']
-# calc_prop(df=data, groups=groups, vars=measures, weighted=False)
+groups = ['TOID']
+measures = ['Measure']
+calc_prop(df=data, groups=groups, vars=measures, weighted=False)
+calc_prop(df=data, groups=[], vars=measures, weighted=True)
 
 
 # Create a larger test dataset
