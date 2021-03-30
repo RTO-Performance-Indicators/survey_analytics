@@ -52,12 +52,12 @@ def prop_n(x):
     return pd.Series(d, index=['proportion', 'N'])
 
 # Test
-data = pd.read_csv('../data/test.csv')
+# data = pd.read_csv('../data/test.csv')
 
-groups = ['TOID']
-measures = ['Measure']
-calc_prop(df=data, groups=groups, vars=measures, weighted=False)
-calc_prop(df=data, groups=[], vars=measures, weighted=True)
+# groups = ['TOID']
+# measures = ['Measure']
+# calc_prop(df=data, groups=groups, vars=measures, weighted=False)
+# calc_prop(df=data, groups=[], vars=measures, weighted=True)
 
 
 # Create a larger test dataset
