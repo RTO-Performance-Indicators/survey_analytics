@@ -55,15 +55,15 @@ def prop_n(x):
 # data = pd.read_csv('../data/test.csv')
 
 # or test on a larger test dataset
-import random
-size = 2000000
-data = pd.DataFrame({
-    'TOID': [random.randint(1, 3) for i in range(size)],
-    'Measure': [random.randint(0, 1) for i in range(size)],
-    'WEIGHT': [random.random() for i in range(size)]
-})
+# import random
+# size = 2000000
+# data = pd.DataFrame({
+#     'TOID': [random.randint(1, 3) for i in range(size)],
+#     'Measure': [random.randint(0, 1) for i in range(size)],
+#     'WEIGHT': [random.random() for i in range(size)]
+# })
 
-import time
-groups = ['TOID']
-measures = ['Measure']
-%timeit calc_prop(df=data, groups=groups, vars=measures, weighted=False)
+# import time
+# groups = ['TOID']
+# measures = ['Measure']
+# %timeit calc_prop(df=data, groups=groups, vars=measures, weighted=False)
