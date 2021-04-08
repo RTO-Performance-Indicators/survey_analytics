@@ -13,7 +13,9 @@ survey_functions.py contains Andrew's version of python code.
 
 ## Usage
 
-To use the code in this python module:
+### python
+
+To use the python functions in this module:
 
 1. Make sure you have a copy of this repository on a local drive
 2. Import the module by:
@@ -28,4 +30,17 @@ script:
 import sys
 sys.path.append('C:\\...\\GitHub\\survey_analytics')
 from data_requests import survey_functions
+```
+
+### R
+
+To use the R functions in this module:
+
+1. Make sure you have a copy of this repository on a local drive
+2. Import the script using the *source* function
+
+For example:
+
+```
+source("C:/Users/.../Documents/GitHub/survey_analytics/data_requests/[filename].R")
 ```
