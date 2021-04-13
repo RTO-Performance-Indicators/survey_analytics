@@ -3,7 +3,7 @@ import numpy as np
 import dask
 import dask.dataframe as dd
 
-def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True):
+def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=True):
 
     # Take copies of lists to avoid modifying global/environment variables
     group_vars1 = groups.copy()
@@ -22,15 +22,11 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True):
     long = pd.melt(df, id_vars=group_vars1, value_vars=calc_vars)
 
     # Remove invalid values (i.e. -888/-999 for unanswered/unpresented)
-    long = long[(long['value'] >= 0) & (long['value'] <= 5)]
+    long = long[long['value'] >= 0]
 
-    # Convert from 5-scale likert to binary via merge
-    # NOTE: Does not affect binary variables, because 0 -> 0 and 1 -> 1
-    likert_to_binary = pd.DataFrame({
-        'value' : [0, 1, 2, 3, 4, 5], 
-        'binary': [0, 1, 1, 0, 0, 0]
-    })
-    long = pd.merge(long, likert_to_binary, how='left')
+    if binary_conversion == True:
+        long = long[long['value'] <= 5]
+        long['value'] = [0 if x > 2 else 1 for x in long['value']]
 
     # Conversion to long format gathers measures into one column, 'variable'
     # 'variable' column needs to be added as a grouping variable
@@ -47,11 +43,24 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True):
 # calculates proportion and N
 def prop_n(x):
     d = {}
-    d['proportion'] = sum(x['binary'] * x['weight']) / sum(x['weight'])
-    d['N'] = len(x['binary'])
+    d['proportion'] = sum(x['value'] * x['weight']) / sum(x['weight'])
+    d['N'] = len(x['value'])
     return pd.Series(d, index=['proportion', 'N'])
 
+# def binary_conversion(x):
+
+
 # Test
+data = pd.DataFrame({
+    'value': [1, 2, 3, 4, 5, 6, 7, 8, 10, -999],
+    'WEIGHT': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+})
+data = pd.DataFrame({
+    'value': [0, 0, 1, 0, 1, 1],
+    'WEIGHT': [1, 1, 1, 1, 1, 1]
+})
+calc_prop(df=data, groups=[], vars=['value'], binary_conversion=False)
+
 # data = pd.read_csv('../data/test.csv')
 
 # or test on a larger test dataset
