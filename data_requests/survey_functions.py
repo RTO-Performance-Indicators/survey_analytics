@@ -67,3 +67,22 @@ def prop_n(x):
 # groups = ['TOID']
 # measures = ['Measure']
 # %timeit calc_prop(df=data, groups=groups, vars=measures, weighted=False)
+
+def job_before_after_training(Year, old_var, new_var):
+    if Year < 2020:
+        if old_var < 0:
+            return old_var
+        elif old_var == 1:
+            return 1
+        else:
+            return 0
+    else:
+        if new_var < 0:
+            return new_var
+        elif new_var <= 3:
+            return 1
+        else:
+            return 0
+
+# Test
+# job_before_after_training(Year=2019, old_var=1, new_var=np.nan)
