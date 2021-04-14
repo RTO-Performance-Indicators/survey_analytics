@@ -3,8 +3,8 @@ import numpy as np
 import dask
 import dask.dataframe as dd
 
-def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=True):
-
+def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=False):
+    
     # Take copies of lists to avoid modifying global/environment variables
     group_vars1 = groups.copy()
     group_vars2 = groups.copy()
@@ -19,14 +19,14 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=
     group_vars1.append('weight') # keeps weights as separate column
 
     # Survey data is wide; convert to long format
-    long = pd.melt(df, id_vars=group_vars1, value_vars=calc_vars)
+    long = pd.melt(df, id_vars=group_vars1, value_vars=calc_vars, value_name='value')
 
     # Remove invalid values (i.e. -888/-999 for unanswered/unpresented)
     long = long[long['value'] >= 0]
 
     if binary_conversion == True:
-        long = long[long['value'] <= 5]
-        long['value'] = [0 if x > 2 else 1 for x in long['value']]
+        long = long[long['value'] <= 5] # 6 is usually "unknown"
+        long['value'] = convert_to_binary(values=long['value'])
 
     # Conversion to long format gathers measures into one column, 'variable'
     # 'variable' column needs to be added as a grouping variable
@@ -46,20 +46,39 @@ def prop_n(x):
     d['proportion'] = sum(x['value'] * x['weight']) / sum(x['weight'])
     d['N'] = len(x['value'])
     return pd.Series(d, index=['proportion', 'N'])
+# Test
+data = pd.DataFrame({
+    'weight': [1, 1, 1, 1, 1],
+    'variable': ['a', 'a', 'a', 'a', 'a'],
+    'value': [2, 3, 4, 5, 6]
+})
+data.groupby('variable').apply(prop_n) # doesn't work for non-binary variables
 
-# def binary_conversion(x):
 
+def convert_to_binary(values):
+    if set(values) == {0, 1}:
+            print('Values are already binary, and proportions may be incorrect.')
+            print('Consider setting binary_conversion argument to False.')
+    return [0 if x > 2 else 1 for x in values]
+# Test
+# convert_to_binary([1, 1, 2, 2, 3])
+# convert_to_binary([1, 1, 0, 0, 1])
 
 # Test
 data = pd.DataFrame({
-    'value': [1, 2, 3, 4, 5, 6, 7, 8, 10, -999],
+    's_': [1, 2, 3, 4, 5, 6, 7, 8, 10, -999],
     'WEIGHT': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 })
+calc_prop(df=data, groups=[], vars=['s_'])
+
 data = pd.DataFrame({
-    'value': [0, 0, 1, 0, 1, 1],
+    's_': [0, 0, 1, 0, 1, 1],
     'WEIGHT': [1, 1, 1, 1, 1, 1]
 })
-calc_prop(df=data, groups=[], vars=['value'], binary_conversion=False)
+calc_prop(df=data, groups=[], vars=['s_'])
+calc_prop(df=data, groups=[], vars=['s_'])
+
+
 
 # data = pd.read_csv('../data/test.csv')
 
