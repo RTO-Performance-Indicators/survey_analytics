@@ -5,21 +5,15 @@ import dask.dataframe as dd
 
 def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=False):
     
-    # Take copies of lists to avoid modifying global/environment variables
-    group_vars1 = groups.copy()
-    group_vars2 = groups.copy()
-    calc_vars = vars.copy()
-
     if weighted == True:
         weights = df['WEIGHT']
     else:
-        weights = [1] * len(df) # unweighted: all weights are equal to 1
+        weights = [1] * len(df) # unweighted: all weights = 1
     
     df['weight'] = weights
-    group_vars1.append('weight') # keeps weights as separate column
-
+    
     # Survey data is wide; convert to long format
-    long = pd.melt(df, id_vars=group_vars1, value_vars=calc_vars, value_name='value')
+    long = pd.melt(df, id_vars=groups + ['weight'], value_vars=vars, value_name='value')
 
     # Remove invalid values (i.e. -888/-999 for unanswered/unpresented)
     long = long[long['value'] >= 0]
@@ -27,13 +21,9 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=
     if binary_conversion == True:
         long = long[long['value'] <= 5] # 6 is usually "unknown"
         long['value'] = convert_to_binary(values=long['value'])
-
-    # Conversion to long format gathers measures into one column, 'variable'
-    # 'variable' column needs to be added as a grouping variable
-    group_vars2.append('variable')
-    
+   
     # Calculate proportions and N
-    result_long = long.groupby(group_vars2).apply(prop_n)
+    result_long = long.groupby(groups + ['variable']).apply(prop_n)
 
     # Convert proportion to NA if N < min_n
     result_long.loc[result_long['N'] < min_n, 'proportion'] = np.nan
@@ -46,7 +36,15 @@ def prop_n(x):
     d['proportion'] = sum(x['value'] * x['weight']) / sum(x['weight'])
     d['N'] = len(x['value'])
     return pd.Series(d, index=['proportion', 'N'])
+
 # Test
+data = pd.DataFrame({
+    'weight': [1, 1, 1, 1, 1],
+    'variable': ['a', 'a', 'a', 'a', 'a'],
+    'value': [0, 0, 1, 1, 1]
+})
+data.groupby('variable').apply(prop_n) # Works for binary variables
+
 data = pd.DataFrame({
     'weight': [1, 1, 1, 1, 1],
     'variable': ['a', 'a', 'a', 'a', 'a'],
@@ -54,6 +52,11 @@ data = pd.DataFrame({
 })
 data.groupby('variable').apply(prop_n) # doesn't work for non-binary variables
 
+groups = ['a']
+groups.append('b')
+groups
+groups + ['c']
+groups
 
 def convert_to_binary(values):
     if set(values) == {0, 1}:
@@ -76,7 +79,7 @@ data = pd.DataFrame({
     'WEIGHT': [1, 1, 1, 1, 1, 1]
 })
 calc_prop(df=data, groups=[], vars=['s_'])
-calc_prop(df=data, groups=[], vars=['s_'])
+calc_prop(df=data, groups=[], vars=['s_'], binary_conversion=True)
 
 
 
