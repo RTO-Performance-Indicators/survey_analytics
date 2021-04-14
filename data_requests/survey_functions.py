@@ -37,13 +37,32 @@ def prop_n(x):
     d['N'] = len(x['value'])
     return pd.Series(d, index=['proportion', 'N'])
 
+def prop_n(x):
+    d = {}
+    d['sum_weights'] = sum(x['weight'])
+    d['N'] = len(x['value'])
+    return pd.Series(d, index=['proportion', 'N'])
+
 # Test
 data = pd.DataFrame({
-    'weight': [1, 1, 1, 1, 1],
-    'variable': ['a', 'a', 'a', 'a', 'a'],
-    'value': [0, 0, 1, 1, 1]
+    'weight': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    'variable': ['a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b', 'b'],
+    'value': [0, 0, 1, 1, 1, 0, 1, 1, 0, 0]
 })
 data.groupby('variable').apply(prop_n) # Works for binary variables
+
+data
+(
+    data
+    .groupby([] + ['variable', 'value'], as_index=False)
+    .agg(
+        N=('weight', 'size'),
+        sum_wt=('weight', 'sum')
+    )
+    # .reset_index()
+    # .groupby([] + ['variable'], as_index=False)
+    # .apply(lambda x: x['weight'] / sum(x['weight']))
+)
 
 data = pd.DataFrame({
     'weight': [1, 1, 1, 1, 1],
