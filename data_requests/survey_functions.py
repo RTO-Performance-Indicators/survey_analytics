@@ -23,13 +23,12 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=
         long['value'] = convert_to_binary(values=long['value'])
    
     # Calculate proportions and N
-    # result_long = long.groupby(groups + ['variable']).apply(prop_n)
-    result_long = calculate_proportion_ns(long, groups=groups)
+    result = calculate_proportion_ns(long, groups=groups)
     
     # Convert proportion to NA if N < min_n
-    result_long.loc[result_long['N'] < min_n, 'proportion'] = np.nan
+    result.loc[result_long['N'] < min_n, 'proportion'] = np.nan
 
-    return(result_long)
+    return(result)
 
 def convert_to_binary(values):
     if set(values) == {0, 1}:
@@ -92,8 +91,18 @@ def calculate_proportion_ns(df, groups):
 #     'Measure': [random.randint(0, 1) for i in range(size)],
 #     'WEIGHT': [random.random() for i in range(size)]
 # })
-
-# import time
 # groups = ['TOID']
 # measures = ['Measure']
+# calc_prop(df=data, groups=groups, vars=measures, weighted=False)
+
+# data = pd.DataFrame({
+#     'TOID': [random.randint(1, 3) for i in range(size)],
+#     's_': [random.randint(1, 9) for i in range(size)],
+#     'WEIGHT': [random.random() for i in range(size)]
+# })
+# groups = ['TOID']
+# vars = ['s_']
+# calc_prop(df=data, groups=groups, vars=vars, weighted=False)
+
+# import time
 # %timeit calc_prop(df=data, groups=groups, vars=measures, weighted=False)
