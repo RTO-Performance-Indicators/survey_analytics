@@ -15,10 +15,9 @@ import pandas as pd                 # Python Data Analysis Library
 import numpy as np                  # Numerical Python
 
 # Load data
-filepath <- paste0("\\\\education.vic.gov.au/SHARE/HESG/Projects/PEU/",
-                   "RTOPI/Both Surveys/All Final Datasets/",
-                   "Datasets - 2020/Output/StudentSurveys.csv")
-StudentSurvey  <- read.csv(filepath, stringsAsFactors = FALSE)
+filePath = '\\\\education.vic.gov.au/SHARE/HESG/Projects/PEU/RTOPI/' \
+           'Both Surveys/All Final Datasets/Datasets - 2020/Output/' \
+           'StudentSurveys.csv'
 df = pd.read_csv(filePath, encoding = 'ISO-8859-1')
 df = df[np.isin(df['SurveyYear'], ['S2019', 'S2020'])]
 
