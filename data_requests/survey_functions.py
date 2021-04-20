@@ -24,7 +24,7 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=
     result = calculate_proportion_ns(long, groups=groups)
     
     # Convert proportion to NA if N < min_n
-    result.loc[result_long['N'] < min_n, 'proportion'] = np.nan
+    result.loc[result['N'] < min_n, 'proportion'] = np.nan
 
     return(result)
 
