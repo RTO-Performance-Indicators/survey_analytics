@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-import dask
-import dask.dataframe as dd
 
 def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=False):
     
