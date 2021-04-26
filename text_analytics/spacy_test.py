@@ -1,12 +1,24 @@
 import pandas as pd
+import numpy as np
 
 import hunspell
+
+import gensim
+import gensim.corpora as corpora
+from gensim.utils import simple_preprocess
+from gensim.models import CoherenceModel
+
 import spacy
-#from spacy_hunspell import spacy_hunspell # unable to install spacy_hunspell
+from spacy.language import Language
+from spacy.lang.en import English
+from spacy.lang.en.stop_words import STOP_WORDS
+
+spacy_stopwords = spacy.lang.en.stop_words.STOP_WORDS
 
 # Load small trained pipeline that is used to predict POS tags and dependencies
 # Can use en_core_web_lg for a larger trained pipeline
-nlp = spacy.load('en_core_web_sm')
+# nlp = spacy.load('en_core_web_sm')
+nlp = spacy.load('en_core_web_lg')
 
 # Test data
 data = pd.DataFrame({
@@ -25,6 +37,7 @@ data['doc'] = [nlp(text) for text in data['s_rsn_dc_v']]
 # Number of tokens in each doc
 data['n_tokens'] = [len(tokens) for tokens in data['doc']]
 data
+
 
 # Sentences per doc
 list(data['doc'][3].sents)
@@ -49,19 +62,41 @@ for token in data['doc'][1]:
 for ent in data['doc'][2].ents:
     print(ent.text, ent.label_)
 
-# 'en_core_web_sm' is a standardised pipeline.
-# Pipelines are made of pipes.
-# The pipeline is:
-#   1. tokenizer
-#   2. tagger
-#   3. parser (add dependency labels)
-#   4. ner (entity recogniser)
-#   5. lemmatizer
-#   6. textcat (text categoriser)
-#   7. custom (custom components)
-# We can modify existing pipelines by adding pipes!
-# def function(doc):
-#     ...
-#     return doc
 
-# custom_nlp = nlp.add_pipe(function, before='parser')
+# https://towardsdatascience.com/building-a-topic-modeling-pipeline-with-spacy-and-gensim-c5dc03ffc619
+
+# Add a pipe to the pipeline to remove stop words
+@Language.component('stopwords')
+def component_func(doc):
+    doc = [token.text for token in doc if token.is_stop != True]
+    return(doc)
+
+nlp.add_pipe('stopwords')
+
+# For Gensim, spacy docs need to be converted into a list of lists
+doc_list = []
+for doc in data['s_rsn_dc_v']:
+    doc_strings = nlp(doc)
+    doc_list.append(doc_strings)
+
+doc_list
+
+words = corpora.Dictionary(doc_list)
+
+# Turn each document into bag of words
+corpus = [words.doc2bow(doc) for doc in doc_list]
+corpus
+
+# Run LDA model
+lda_model = gensim.models.ldamodel.LdaModel(
+    corpus=corpus, 
+    id2word=words, 
+    num_topics=2,
+    random_state=2,
+    update_every=1,
+    passes=2,
+    alpha='auto',
+    per_word_topics=True
+)
+
+lda_model
