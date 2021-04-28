@@ -1,8 +1,8 @@
 # README
 
-This module contains functions to calculate survey measures
+This module contains Python functions to calculate survey measures.
 
-This can be used to verify the measures provided by survey providers.
+This are primarily used to verify the measures calculated by survey providers and provided to us in the interim and final data sets.
 
 | Measure | Description | Function |
 |:--------|:------------|----------|
@@ -19,3 +19,22 @@ This can be used to verify the measures provided by survey providers.
 | Measure 15 | Proportion of employers who would recommend the RTO | calc_one_question_measure |
 | Measure 16 | Proportion of students satisfied with the RTO | calc_one_question_measure |
 
+## Usage
+
+To import the module:
+
+```
+import sys
+sys.path.append('C:\\Users\\[GitHub repo folder]\\survey_analytics')
+from calculate_measures import calculate_measures
+```
+
+To use the functions:
+
+```
+# Based on multiple variables
+df['measure5_check'] = calc_multi_measure(df=df, components=['s_sat_prob','s_sat_team','s_sat_num','s_sat_engwrt','s_sat_sc','s_sat_co'], output_name='measure5_check')
+
+# Based on a single variable
+df['measure9_check'] = calc_one_question_measure(df=df, colname='s_achiev', output_name='measure9_check')
+```
