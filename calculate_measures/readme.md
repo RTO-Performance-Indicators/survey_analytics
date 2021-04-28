@@ -30,15 +30,15 @@ The table below shows the performance measures and the correct function to use t
 
 | Measure | Survey | Description | Function |
 |:--------|:-------|:------------|----------|
-| Measure 1 | Student | Proportion of students with an improved employment status after training |  |
-| Measure 5 | Student | Proportion of students satisfied with generic skills and learning experiences | calc_multi_measure |
-| Measure 6 | Employer | Proportion of employers reporting improvement in generic skills and learning experiences | calc_multi_measure |
-| Measure 7 | Student | Proportion of students who went on to further study at a higher level |  |
-| Measure 8 | Student | Proportion of students employed in the same occupation/industry as their course |  |
-| Measure 9 | Student | Proportion of students who achieved their main reason for study | calc_one_question_measure |
-| Measure 10 | Student | Proportion of students who reported a positive perception of teaching | calc_multi_measure |
-| Measure 12 | Student | Proportion of students who would recommend the RTO | calc_one_question_measure |
-| Measure 13 | Student | Proportion of students who reported a positive perception of the assessment process | calc_multi_measure |
-| Measure 14 | Employer | Proportion of employers who are satisfied with training provided by an RTO | calc_one_question_measure |
-| Measure 15 | Employer | Proportion of employers who would recommend the RTO | calc_one_question_measure |
-| Measure 16 | Student | Proportion of students satisfied with the RTO | calc_one_question_measure |
+| Measure 1 | Student | Improved employment status after training |  |
+| Measure 5 | Student | Satisfied with generic skills and learning experiences | calc_multi_measure |
+| Measure 6 | Employer | Improvement in generic skills and learning experiences | calc_multi_measure |
+| Measure 7 | Student | Went on to further study at a higher level |  |
+| Measure 8 | Student | Employed in the same occupation/industry as their course |  |
+| Measure 9 | Student | Achieved their main reason for study | calc_one_question_measure |
+| Measure 10 | Student | Positive perception of teaching | calc_multi_measure |
+| Measure 12 | Student | Recommend the RTO | calc_one_question_measure |
+| Measure 13 | Student | Positive perception of the assessment process | calc_multi_measure |
+| Measure 14 | Employer | Satisfied with training provided by an RTO | calc_one_question_measure |
+| Measure 15 | Employer | Recommend the RTO | calc_one_question_measure |
+| Measure 16 | Student | Satisfied with the RTO | calc_one_question_measure |
