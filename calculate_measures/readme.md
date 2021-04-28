@@ -18,7 +18,7 @@ To use the functions:
 
 ```
 # Based on multiple variables
-df['measure5_check'] = calc_multi_measure(df=df, components=['s_sat_prob','s_sat_team','s_sat_num','s_sat_engwrt','s_sat_sc','s_sat_co'], output_name='measure5_check')
+df['measure5_check'] = calc_multi_measure(df=df, components=['s_sat_prob','s_sat_team','s_sat_num','s_sat_engwrt','s_sat_sc'], output_name='measure5_check')
 
 # Based on a single variable
 df['measure9_check'] = calc_one_question_measure(df=df, colname='s_achiev', output_name='measure9_check')
