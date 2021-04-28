@@ -1,6 +1,44 @@
 import pandas as pd
 import numpy as np
 
+def convert_to_binary(values):
+    # ones = [1, 2]
+    zeroes = [0, 3, 4, 5]
+    if set(values) == {0, 1}:
+            print('Values are already binary.')
+            print('Consider setting binary_conversion argument to False.')
+    return [0 if x in zeroes else 1 for x in values]
+# Test
+# convert_to_binary([1, 1, 2, 2, 3])
+# convert_to_binary([1, 1, 0, 0, 1])
+
+# calculates proportion and N
+def calculate_proportion_ns(df, groups):
+    sum_n = (
+        df
+        .groupby(groups + ['variable', 'value'], as_index=False)['weight']
+        .aggregate([sum, np.size])
+        .rename(columns={'sum': 'sum_weights', 'size': 'n'})
+    )
+
+    grouped = sum_n.groupby(groups + ['variable'])
+    sum_n['proportion'] = grouped['sum_weights'].transform(lambda x: x / sum(x))
+    sum_n['N'] = grouped['n'].transform('sum')
+    
+    return sum_n
+# Test
+# data = pd.DataFrame({
+#     'weight': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+#     'variable': ['a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b', 'b'],
+#     'value': [0, 0, 1, 1, 1, 0, 1, 1, 0, 0]
+# })
+# data = pd.DataFrame({
+#     'weight': [1, 1, 1, 1, 1],
+#     'variable': ['a', 'a', 'a', 'a', 'a'],
+#     'value': [2, 3, 4, 5, 6]
+# })
+# calculate_proportion_ns(data, groups=[])
+
 def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=False):
     
     if weighted == True:
@@ -28,43 +66,6 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=
 
     return(result)
 
-def convert_to_binary(values):
-    if set(values) == {0, 1}:
-            print('Values are already binary, and proportions may be incorrect.')
-            print('Consider setting binary_conversion argument to False.')
-    return [0 if x > 2 else 1 for x in values]
-# Test
-# convert_to_binary([1, 1, 2, 2, 3])
-# convert_to_binary([1, 1, 0, 0, 1])
-
-# calculates proportion and N
-def calculate_proportion_ns(df, groups):
-    sum_n = (
-        df
-        .groupby(groups + ['variable', 'value'], as_index=False)['weight']
-        .aggregate([sum, np.size])
-        .rename(columns={'sum': 'sum_weights', 'size': 'n'})
-    )
-
-    grouped = sum_n.groupby(groups + ['variable'])
-    sum_n['proportion'] = grouped['sum_weights'].transform(lambda x: x / sum(x))
-    sum_n['N'] = grouped['n'].transform('sum')
-    
-    return sum_n
-
-# Test
-# data = pd.DataFrame({
-#     'weight': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-#     'variable': ['a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b', 'b'],
-#     'value': [0, 0, 1, 1, 1, 0, 1, 1, 0, 0]
-# })
-# data = pd.DataFrame({
-#     'weight': [1, 1, 1, 1, 1],
-#     'variable': ['a', 'a', 'a', 'a', 'a'],
-#     'value': [2, 3, 4, 5, 6]
-# })
-# calculate_proportion_ns(data, groups=[])
-
 # Test
 # data = pd.DataFrame({
 #     's_': [1, 2, 3, 4, 5, 6, 7, 8, 10, -999],
@@ -78,6 +79,28 @@ def calculate_proportion_ns(df, groups):
 # })
 # calc_prop(df=data, groups=[], vars=['s_'])
 # calc_prop(df=data, groups=[], vars=['s_'], binary_conversion=True)
+
+def calc_prop_measures(df, groups=[], vars=[], min_n=5, weighted=True):
+    temp = (
+        calc_prop(
+            df=df, 
+            groups=groups, 
+            vars=vars, 
+            min_n=min_n, 
+            weighted=weighted,
+            binary_conversion=False
+        )
+        .reset_index()
+    )
+    
+    return temp[temp['value'] == 1].drop(['value', 'sum_weights'], axis=1)
+
+# Test
+# data = pd.DataFrame({
+#     's_': [0, 0, 1, 0, 1, 1],
+#     'WEIGHT': [1, 1, 1, 1, 1, 1]
+# })
+# calc_prop_measures(df=data, groups=[], vars=['s_'])
 
 # data = pd.read_csv('../data/test.csv')
 
