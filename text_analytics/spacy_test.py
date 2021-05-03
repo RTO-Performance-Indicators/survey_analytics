@@ -11,6 +11,8 @@ import spacy
 
 from spellchecker import SpellChecker
 
+import contextualSpellCheck
+
 # Load small trained pipeline that is used to predict POS tags and dependencies
 # Can use en_core_web_lg for a larger trained pipeline
 # nlp = spacy.load('en_core_web_sm')
@@ -89,13 +91,16 @@ for word in misspelled:
 import spacy
 import contextualSpellCheck
 
-nlp = spacy.load('en_core_web_sm')
+nlp = spacy.load('en_core_web_lg')
 nlp.pipe_names
 contextualSpellCheck.add_to_pipe(nlp)
-doc = nlp('Income was $9.4 milion compared to the prior year of $2.7 milion.')
+text = 'Income was $9.4 milion compared to the prior year of $2.7 milion.'
+text = 'The teachers and trainors at Chisholm Institute were bulying the students'
+doc = nlp(text)
 
 print(doc._.performed_spellCheck) #Should be True
 print(doc._.outcome_spellCheck)
+print(doc._.suggestions_spellCheck)
 
 
 # Get only tokens that satisfy custom criteria
