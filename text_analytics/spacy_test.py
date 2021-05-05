@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import re
 
 import gensim
@@ -8,16 +7,20 @@ from gensim.utils import simple_preprocess
 from gensim.models import CoherenceModel
 
 import spacy
+import contextualSpellCheck
 
 from spellchecker import SpellChecker
-
-import contextualSpellCheck
 
 # Load small trained pipeline that is used to predict POS tags and dependencies
 # Can use en_core_web_lg for a larger trained pipeline
 # nlp = spacy.load('en_core_web_sm')
 # nlp = spacy.load('en_core_web_md')
 nlp = spacy.load('en_core_web_lg') # English, web-based library, large
+
+# Add contextualSpellCheck to end of pipeline
+contextualSpellCheck.add_to_pipe(nlp)
+
+nlp.pipe_names
 
 # Test data
 data = pd.DataFrame({
@@ -50,12 +53,6 @@ data
 for token in data['doc'][1]:
     print(token.text, token.pos_)
 
-data['doc'][1][1].pos_
-
-# Morphology
-for token in data['doc'][1]:
-    print(token.text, token.morph)
-
 # Lemma
 for token in data['doc'][1]:
     print(token.text, token.lemma_)
@@ -68,49 +65,31 @@ for token in data['doc'][1]:
 for ent in data['doc'][2].ents:
     print(ent.text, ent.label_)
 
-# # Add a pipe to the pipeline to remove stop words
-# @Language.component('stopwords')
-# def component_func(doc):
-#     doc = [token.text for token in doc if token.is_stop != True]
-#     return(doc)
 
-# nlp.add_pipe('stopwords', last=True)
-
-# # Rerun the nlp on the data with the modified pipeline
-# data['doc'] = [nlp(text) for text in data['s_rsn_dc_v']]
-# data
-
-# Spelling errors
-data['doc']
-
-
-spell = SpellChecker()
-for word in misspelled:
-    print(spell.correction(word))
-
-import spacy
-import contextualSpellCheck
-
+# Fixing Spelling errors
 nlp = spacy.load('en_core_web_lg')
-nlp.pipe_names
 contextualSpellCheck.add_to_pipe(nlp)
-text = 'Income was $9.4 milion compared to the prior year of $2.7 milion.'
-text = 'The teachers and trainors at Chisholm Institute were bulying the students'
+text = 'The qualiry of teachhers and trainors at Chisholm Institute were bulying the students'
 doc = nlp(text)
 
-print(doc._.performed_spellCheck) #Should be True
+print(doc._.performed_spellCheck)
 print(doc._.outcome_spellCheck)
-print(doc._.suggestions_spellCheck)
+print(doc._.suggestions_spellCheck) # 'bulying' suggested 'among'
+print(doc._.score_spellCheck) # Suggestion for 'bulying' doesn't even include bullying!
 
+# get spelling-corrected tokens
+def corrected_token(token):
+    if token._.get_require_spellCheck:
+        return(token._.get_suggestion_spellCheck)
+    else:
+        return(token.lemma_)
 
-# Get only tokens that satisfy custom criteria
-# 1 - Lemma
-# 2 - Nouns (identified in POS tagging)
-[token.lemma_ for token in data['doc'][1] if token.pos_ == 'NOUN']
+[corrected_token(token) for token in doc if token.pos_ == 'NOUN']
 
+desired_pos = ['NOUN']
 noun_list = []
 for doc in data['doc']:
-    nouns = [token.lemma_ for token in doc if token.pos_ == 'NOUN']
+    nouns = [corrected_token(token) for token in doc if token.pos_ in desired_pos]
     noun_list.append(nouns)
 
 data['nouns'] = noun_list
@@ -139,7 +118,7 @@ lda_model = gensim.models.ldamodel.LdaModel(
     num_topics=3,
 )
 
-lda_model
+lda_model.print_topics()
 
 
 # Topic Evaluation
