@@ -10,7 +10,6 @@ from gensim.models import CoherenceModel
 import spacy
 from spacy.matcher import Matcher, PhraseMatcher
 
-import contextualSpellCheck
 # Load data
 data = pd.read_csv('S:\\RTOPI\\Both Surveys\\All Final Datasets\\Datasets - 2020\\Output\\StudentSurveys.csv', encoding='ISO-8859-1')
 
@@ -70,13 +69,22 @@ matches = matcher(docs[1])
 print("Matches:", [docs[1][start:end].text for match_id, start, end in matches])
 
 # Alternatively, with phrase matcher
-matcher = PhraseMatcher(nlp.vocab)
-pattern = nlp('Victoria University')
-matcher.add("RTO", [pattern])
+rtos = ['Victoria University', 'Swinburne University', 'Chisholm']
+rto_patterns = list(nlp.pipe(rtos))
 
+matcher = PhraseMatcher(nlp.vocab) # Initialise phrase matcher
+matcher.add("RTO", rto_patterns, on_match=matcher) # add to phrase matcher
 
-# Combine spaCy models with rules specific to RTOPI,
-# (because combining statistical models with rule-based systems is
-# greater than the sum of its parts)
+# Define custom component to add to pipeline
+def rto_component(doc):
+    # Apply matcher to doc
+    matches = matcher(doc)
+    # Create span for each match and assign label
+    spans = [Span(doc, start, end, label='RTO') for match_id, start, end in matches]
+    # Overwrite doc.ents with the matched spans
+    doc.ents = spans
+    return doc
 
-docs = list(nlp.pipe(test['verbatims_combined']))
+# Add component to the pipeline after the NER component
+# @Language.component('rto_component')
+    nlp.add_pipe(rto_component, after='ner')
