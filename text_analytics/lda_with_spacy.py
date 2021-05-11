@@ -28,11 +28,10 @@ nlp = spacy.load('en_core_web_sm')
 # nlp = spacy.load('en_core_web_lg')
 
 nlp.pipe_names
-nlp.pipeline
 
 # Standard spacy method
-%%time
-docs = [nlp(text) for text in test['verbatims_combined']]
+# %%time
+# docs = [nlp(text) for text in test['verbatims_combined']]
 
 # nlp.pipe method (a bit faster)
 # n_threads argument is deprecated in spacy v3, 
@@ -43,12 +42,6 @@ docs = list(nlp.pipe(test['verbatims_combined']))
 
 for token in docs[1]:
     print(token.text, token.pos_)
-
-for token in docs[1]:
-    token_text = token.text
-    token_pos = token.pos_
-    token_dep = token.dep_
-    print(token_text, token_pos, token_dep)
 
 for ent in docs[1]:
     print(ent.text)
@@ -88,3 +81,4 @@ def rto_component(doc):
 # Add component to the pipeline after the NER component
 # @Language.component('rto_component')
     nlp.add_pipe(rto_component, after='ner')
+
