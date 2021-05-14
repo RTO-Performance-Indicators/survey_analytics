@@ -1,30 +1,21 @@
 import pandas as pd
 import re
 
-import gensim
-import gensim.corpora as corpora
-from gensim.utils import simple_preprocess
-from gensim.models import CoherenceModel
-
 import spacy
-import contextualSpellCheck
-
-from spellchecker import SpellChecker
 
 # Load small trained pipeline that is used to predict POS tags and dependencies
 # Can use en_core_web_lg for a larger trained pipeline
 # nlp = spacy.load('en_core_web_sm')
 # nlp = spacy.load('en_core_web_md')
 nlp = spacy.load('en_core_web_lg') # English, web-based library, large
-
-# Add contextualSpellCheck to end of pipeline
-contextualSpellCheck.add_to_pipe(nlp)
-
 nlp.pipe_names
+
+# Any pipelines that we don't need?
+# Maybe NER
 
 # Test data
 data = pd.DataFrame({
-    's_rsn_dc_v': [
+    'verbatim': [
         'Testing the spacy package', 
         'I was really unsatisfied with the poor quality of teachers', 
         'The teachers and trainors at Chisholm Institute were bulying the students',
@@ -39,7 +30,7 @@ data = pd.DataFrame({
 
 # Run pipeline:
 # Create document object for each verbatim
-data['doc'] = [nlp(text) for text in data['s_rsn_dc_v']]
+data['doc'] = [nlp(text) for text in data['verbatim']]
 
 # Number of tokens in each doc
 data['n_tokens'] = [len(tokens) for tokens in data['doc']]

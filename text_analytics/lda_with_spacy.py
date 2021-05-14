@@ -9,6 +9,7 @@ from gensim.models import CoherenceModel
 
 import spacy
 from spacy.matcher import Matcher, PhraseMatcher
+from spacy.language import Language
 
 # Load data
 data = pd.read_csv('S:\\RTOPI\\Both Surveys\\All Final Datasets\\Datasets - 2020\\Output\\StudentSurveys.csv', encoding='ISO-8859-1')
@@ -30,8 +31,8 @@ nlp = spacy.load('en_core_web_sm')
 nlp.pipe_names
 
 # Standard spacy method
-# %%time
-# docs = [nlp(text) for text in test['verbatims_combined']]
+%%time
+docs = [nlp(text) for text in test['verbatims_combined']]
 
 # nlp.pipe method (a bit faster)
 # n_threads argument is deprecated in spacy v3, 
@@ -68,7 +69,11 @@ rto_patterns = list(nlp.pipe(rtos))
 matcher = PhraseMatcher(nlp.vocab) # Initialise phrase matcher
 matcher.add("RTO", rto_patterns, on_match=matcher) # add to phrase matcher
 
+
 # Define custom component to add to pipeline
+import spacy
+from spacy.language import Language
+@Language.component("rto_component")
 def rto_component(doc):
     # Apply matcher to doc
     matches = matcher(doc)
@@ -78,7 +83,6 @@ def rto_component(doc):
     doc.ents = spans
     return doc
 
+nlp = spacy.load('en_core_web_sm')
 # Add component to the pipeline after the NER component
-# @Language.component('rto_component')
-    nlp.add_pipe(rto_component, after='ner')
-
+nlp.add_pipe("rto_component", name="rto_component")
