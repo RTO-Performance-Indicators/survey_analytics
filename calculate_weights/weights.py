@@ -5,11 +5,11 @@ def calc_student_weights(population_df,responses_df,inscope_df=None,merge_in=Fal
     # this assumes the survey file is the version from src 
     # and hasn't already been merged with the admin file.
     
-    if inscope is not None:
+    if inscope_df is not None:
         # since the column name is formatted differently, set as index so it isn't duplicated in the merge
-        #inscope.set_index('surveyresponseid',inplace=True)
+        #inscope_df.set_index('surveyresponseid',inplace=True)
         # merge and filter to those in scope
-        merged = pd.merge(population_df,inscope,left_on='SurveyResponseID',right_index=True)
+        merged = pd.merge(population_df,inscope_df,left_on='SurveyResponseID',right_index=True)
         population = merged[(merged['weighting_inscope'] ==1)].copy()
     else:
         population = population_df.copy()
