@@ -224,7 +224,11 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
 
     # rounding
     if rounded == True:
-        result = round(result*100,1)
+        if count_type is None:
+            result = round(result*100,1)
+        else:
+            result_columns = [col for col in result.columns if '_result' in col]
+            result[result_columns] = round(result[result_columns]*100,1)
     
     # sort rows
     result.sort_index(inplace=True)
