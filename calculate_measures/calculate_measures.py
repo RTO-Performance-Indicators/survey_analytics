@@ -146,7 +146,7 @@ def calc_measure(df, components=[], preserve_NA=True):
     '''
     # convert component argument to a list, if it is not already a list
     # which may occur if component is a single column
-    if type(components) != type(list):
+    if type(components) != type(list()):
         components = [components]
 
     data = df[components].copy()
@@ -177,14 +177,14 @@ def calc_measure(df, components=[], preserve_NA=True):
     return(data['measure'])
 
 # Test
-# data = pd.DataFrame({
-#     'component_1': [1, 2, 3, 4, 5, 5, -999],
-#     'component_2': [1, 1, 1, 1, 1, 4, 5]
-# })
+data = pd.DataFrame({
+    'component_1': [1, 2, 3, 4, 5, 5, -999],
+    'component_2': [1, 1, 1, 1, 1, 4, 5]
+})
 
-# calc_measure(df=data, components=['component_1'], preserve_NA=False)
-# calc_measure(df=data, components='component_1', preserve_NA=False) # This also works if single column provided is not in a list
-# calc_measure(df=data, components=['component_1', 'component_2'], preserve_NA=False)
+calc_measure(df=data, components=['component_1'], preserve_NA=False)
+calc_measure(df=data, components='component_1', preserve_NA=False) # This also works if single column provided is not in a list
+calc_measure(df=data, components=['component_1', 'component_2'], preserve_NA=False)
 
 # # Assign the list to a column name
 # data['single'] = calc_measure(df=data, components=['component_1'], preserve_NA=False)
