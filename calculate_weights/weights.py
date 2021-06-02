@@ -48,3 +48,39 @@ def calc_student_weights(population_df,responses_df,inscope_df=None,merge_in=Fal
     else:
         merged_weights = pd.merge(responses, weights['weight'], left_on=wt_vars,right_index=True,how='left')
         return(merged_weights)
+
+pop_df = pd.DataFrame({
+    'id': [1, 2, 3, 4, 5, 6, 7, 8],
+    'region': ['East Metro', 'East Metro', 'North Metro', 'North Metro', 
+               'South Metro', 'South Metro', 'West Metro', 'West Metro'],
+    'ind': ['A', 'B', 'A', 'B', 'A', 'B', 'A', 'B']
+})
+resp_df = pd.DataFrame({
+    'id': [1, 2, 3, 5, 7]
+})
+
+pop_df
+resp_df
+
+pop_matrix = (
+    pop_df
+    .groupby(['region', 'ind'])
+    .agg('count')
+    .reset_index()
+    .rename(columns={'id': 'pop'})
+)
+
+resp_matrix = (
+    pop_df
+    .merge(resp_df, how='inner')
+    .groupby(['region', 'ind'])
+    .agg('count')
+    .reset_index()
+    .rename(columns={'id': 'responses'})
+)
+
+pop_matrix.merge(resp_matrix, how='left')
+
+
+def calc_employer_weights(population_df, responses_df, delta_valid=True):
+    
