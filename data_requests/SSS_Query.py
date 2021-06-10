@@ -10,11 +10,28 @@ import re
 # helper function for new survey_query. runs much faster then .apply
 # also wide version with for loop of columns is faster than doing on values column of melted df. no idea why though.
 
-def grouped_wm(data, variables, weight_var, grouper, count_type=None):
+def grouped_wm(data, variables, weight_var, grouper, survey, count_type=None):
 
     results = []
     counts = []
     for value_col in variables:
+        # select correct weight for employer survey
+        if survey == 'e':
+            if value_col in ['e_new_fut_intent', 'e_barrier_90',
+       'e_barrier_97', 'e_barrier_99', 'e_barrier_999', 'e_barrier_01',
+       'e_barrier_02', 'e_barrier_03', 'e_barrier_04', 'e_barrier_05',
+       'e_barrier_06', 'e_barrier_07', 'e_barrier_08', 'e_barrier_09',
+       'e_barrier_10', 'e_barrier_11', 'e_barrier_12', 'e_barrier_13',
+       'e_barrier_14', 'e_barrier_15', 'e_reason24', 'e_reason25',
+       'e_reason26', 'e_reason27', 'e_reason1', 'e_reason2', 'e_reason3',
+       'e_reason4', 'e_reason5', 'e_reason6', 'e_reason7', 'e_reason8',
+       'e_reason9', 'e_reason10', 'e_reason11', 'e_reason12',
+       'e_reason13', 'e_reason14', 'e_reason15', 'e_reason16',
+       'e_reason17', 'e_reason18', 'e_reason19', 'e_reason20',
+       'e_reason21', 'e_reason22', 'e_reason23', 'e_further_res']:
+                weight_var = 'weight_general'
+            else:
+                weight_var = 'weight_valid'
 
         data['product'] = data[value_col].values * data[weight_var].values
         data['weights_filtered'] = data[weight_var].where(~data['product'].isnull())
@@ -45,13 +62,29 @@ def grouped_wm(data, variables, weight_var, grouper, count_type=None):
 # helper function for calculating percentages of each value for categorical variables. 
 # Way slower than main version as it loops through each value, but still 10x faster than old function for categorical vars.
 
-def cat_grouped_wm(data, cat_vars, weight_var, grouper,NA_values,count_type,unweighted, low_N):
+def cat_grouped_wm(data, cat_vars, weight_var, grouper,NA_values,count_type,unweighted, low_N, survey):
     cat_results = []
     cat_counts = []
     cat_varnames = []
 
-    
     for value_col in cat_vars:
+        # select correct weight for employer survey
+        if survey == 'e':
+            if value_col in ['e_new_fut_intent', 'e_barrier_90',
+       'e_barrier_97', 'e_barrier_99', 'e_barrier_999', 'e_barrier_01',
+       'e_barrier_02', 'e_barrier_03', 'e_barrier_04', 'e_barrier_05',
+       'e_barrier_06', 'e_barrier_07', 'e_barrier_08', 'e_barrier_09',
+       'e_barrier_10', 'e_barrier_11', 'e_barrier_12', 'e_barrier_13',
+       'e_barrier_14', 'e_barrier_15', 'e_reason24', 'e_reason25',
+       'e_reason26', 'e_reason27', 'e_reason1', 'e_reason2', 'e_reason3',
+       'e_reason4', 'e_reason5', 'e_reason6', 'e_reason7', 'e_reason8',
+       'e_reason9', 'e_reason10', 'e_reason11', 'e_reason12',
+       'e_reason13', 'e_reason14', 'e_reason15', 'e_reason16',
+       'e_reason17', 'e_reason18', 'e_reason19', 'e_reason20',
+       'e_reason21', 'e_reason22', 'e_reason23', 'e_further_res']:
+                weight_var = 'weight_general'
+            else:
+                weight_var = 'weight_valid'
 
         # create array of relevant values and remove those specified as NAs
         values = data[value_col].unique()
@@ -194,7 +227,7 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
 
         #weighted version    
         else: 
-            result, counts = grouped_wm(data, variables, weight_var, grouper, count_type)
+            result, counts = grouped_wm(data, variables, weight_var, grouper, survey, count_type)
 
         # suppress results with low N 
         n = data.groupby(grouper, sort=False).count()
@@ -216,7 +249,7 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
 
     if cat_vars != []:
     # calculate results for categorical variables
-        cat_result = cat_grouped_wm(data,cat_vars,weight_var,grouper,NA_values,count_type,unweighted,low_N)
+        cat_result = cat_grouped_wm(data,cat_vars,weight_var,grouper,NA_values,count_type,unweighted,low_N, survey)
         if variables != []:
             result = pd.merge(result,cat_result,left_index=True,right_index=True)
         else:
