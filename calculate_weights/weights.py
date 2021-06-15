@@ -49,18 +49,34 @@ def calc_student_weights(population_df,responses_df,inscope_df=None,merge_in=Fal
         merged_weights = pd.merge(responses, weights['weight'], left_on=wt_vars,right_index=True,how='left')
         return(merged_weights)
 
+
+import string
+import random
+
+rows = 3000
+responses = int(rows * 0.39)
+regions = [
+    'East Metro', 'North Metro', 'South Metro', 'West Metro',
+    'Barwon South West', 'Gippsland', 'Grampians', 'Hume', 'Loddon Mallee'
+]
+industries = list(string.ascii_uppercase)[0:19]
+
 pop_df = pd.DataFrame({
-    'id': [1, 2, 3, 4, 5, 6, 7, 8],
-    'region': ['East Metro', 'East Metro', 'North Metro', 'North Metro', 
-               'South Metro', 'South Metro', 'West Metro', 'West Metro'],
-    'ind': ['A', 'B', 'A', 'B', 'A', 'B', 'A', 'B']
-})
-resp_df = pd.DataFrame({
-    'id': [1, 2, 3, 5, 7]
+    'id': list(range(rows)),
+    'region': random.choices(regions, k=rows),
+    'ind': random.choices(industries, k=rows)
 })
 
 pop_df
+resp_df = pd.DataFrame({
+    'id': random.sample(range(rows), k=responses)
+})
+
+pop_adjustment = 1.0 # This will need to be calculated per region
+
+pop_df
 resp_df
+pop_adjustment
 
 pop_matrix = (
     pop_df
@@ -79,8 +95,13 @@ resp_matrix = (
     .rename(columns={'id': 'responses'})
 )
 
-pop_matrix.merge(resp_matrix, how='left')
+pop_matrix['adj_pop'] = (pop_matrix['pop'] * pop_adjustment).astype(int)
 
+ratios = (
+    pop_matrix
+    .merge(resp_matrix, how='left')
+    .assign(ratio = lambda x: x['adj_pop'] / x['responses'])
+)
 
-def calc_employer_weights(population_df, responses_df, delta_valid=True):
-    
+ratios.sort_values('adj_pop')
+
