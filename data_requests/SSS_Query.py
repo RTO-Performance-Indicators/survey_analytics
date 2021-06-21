@@ -181,7 +181,6 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
             unweighted = True
         # set weight and year vars
         year_var = 'year'
-        weight_var = 'Weight'
 
     # do unweighted if grouped by rto (same reason as above)
 
@@ -213,7 +212,11 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
     columns.mask((columns > 2) ,0,inplace=True)
     # create list of other columns we need (grouping and weight)
     cols = grouper.copy()
-    cols.append(weight_var)
+    if survey != 'e':
+        cols.append(weight_var)
+    else:
+        cols.append('weight_general')
+        cols.append('weight_valid')
     cols = cols + cat_vars
 
     # merge cleaned columns with grouping variables and weights. Indexes match as they're from the same df to start with.
