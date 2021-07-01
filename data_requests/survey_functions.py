@@ -2,10 +2,21 @@ import pandas as pd
 import numpy as np
 
 def convert_to_binary(values):
-    # ones = [1, 2]
+    
+    # Convert for likert scale questions with the following values:
+    # 1 - Highly satisfied    -> 1
+    # 2 - Satisfied           -> 1
+    # 3 - neither             -> 0
+    # 4 - Dissatisfied        -> 0
+    # 5 - Highly dissatisfied -> 0
+    
     zeroes = [0, 3, 4, 5]
+    
     if set(values) == {0, 1}:
             print('Values are already binary.')
+            # This second print statement doesn't make much sense in this
+            # function alone.
+            # It makes sense when called from calc_prop function below
             print('Consider setting binary_conversion argument to False.')
     return [0 if x in zeroes else 1 for x in values]
 # Test
@@ -39,10 +50,10 @@ def calculate_proportion_ns(df, groups):
 # })
 # calculate_proportion_ns(data, groups=[])
 
-def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=False):
+def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, weight='weight', binary_conversion=False):
     
     if weighted == True:
-        weights = df['WEIGHT']
+        weights = df[weight]
     else:
         weights = [1] * len(df) # unweighted: all weights = 1
     
@@ -68,10 +79,10 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, binary_conversion=
 
 # Test
 # data = pd.DataFrame({
-#     's_': [1, 2, 3, 4, 5, 6, 7, 8, 10, -999],
+#     'a': [1, 2, 3, 4, 5, 6, 7, 8, 10, -999],
 #     'WEIGHT': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 # })
-# calc_prop(df=data, groups=[], vars=['s_'])
+# calc_prop(df=data, groups=[], vars=['a'], weight='WEIGHT')
 
 # data = pd.DataFrame({
 #     's_': [0, 0, 1, 0, 1, 1],
@@ -91,16 +102,18 @@ def calc_prop_measures(df, groups=[], vars=[], min_n=5, weighted=True):
             binary_conversion=False
         )
         .reset_index()
+        .query('value == 1')
+        .drop(['value', 'sum_weights'], axis=1)
     )
     
-    return temp[temp['value'] == 1].drop(['value', 'sum_weights'], axis=1)
+    return temp
 
 # Test
 # data = pd.DataFrame({
-#     's_': [0, 0, 1, 0, 1, 1],
-#     'WEIGHT': [1, 1, 1, 1, 1, 1]
+#     'a': [0, 0, 1, 0, 1, 1],
+#     'weight': [1, 1, 1, 1, 1, 1]
 # })
-# calc_prop_measures(df=data, groups=[], vars=['s_'])
+# calc_prop_measures(df=data, groups=[], vars=['a'])
 
 # data = pd.read_csv('../data/test.csv')
 
