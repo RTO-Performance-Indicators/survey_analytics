@@ -17,21 +17,19 @@ def grouped_wm(data, variables, weight_var, grouper, survey, count_type=None):
     for value_col in variables:
         # select correct weight for employer survey
         if survey == 'e':
-            if value_col in ['e_new_fut_intent', 'e_barrier_90',
-       'e_barrier_97', 'e_barrier_99', 'e_barrier_999', 'e_barrier_01',
-       'e_barrier_02', 'e_barrier_03', 'e_barrier_04', 'e_barrier_05',
-       'e_barrier_06', 'e_barrier_07', 'e_barrier_08', 'e_barrier_09',
-       'e_barrier_10', 'e_barrier_11', 'e_barrier_12', 'e_barrier_13',
-       'e_barrier_14', 'e_barrier_15', 'e_reason24', 'e_reason25',
-       'e_reason26', 'e_reason27', 'e_reason1', 'e_reason2', 'e_reason3',
-       'e_reason4', 'e_reason5', 'e_reason6', 'e_reason7', 'e_reason8',
-       'e_reason9', 'e_reason10', 'e_reason11', 'e_reason12',
-       'e_reason13', 'e_reason14', 'e_reason15', 'e_reason16',
-       'e_reason17', 'e_reason18', 'e_reason19', 'e_reason20',
-       'e_reason21', 'e_reason22', 'e_reason23', 'e_further_res']:
-                weight_var = 'weight_general'
-            else:
-                weight_var = 'weight_valid'
+            if value_col in ['hiring_intent', 'barrier_90',
+       'barrier_97', 'barrier_99', 'barrier_999', 'barrier_01',
+       'barrier_02', 'barrier_03', 'barrier_04', 'barrier_05',
+       'barrier_06', 'barrier_07', 'barrier_08', 'barrier_09',
+       'barrier_10', 'barrier_11', 'barrier_12', 'barrier_13',
+       'barrier_14', 'barrier_15', 'reason24', 'reason25',
+       'reason26', 'reason27', 'reason1', 'reason2', 'reason3',
+       'reason4', 'reason5', 'reason6', 'reason7', 'reason8',
+       'reason9', 'reason10', 'reason11', 'reason12',
+       'reason13', 'reason14', 'reason15', 'reason16',
+       'reason17', 'reason18', 'reason19', 'reason20',
+       'reason21', 'reason22', 'reason23', 'further_research']:
+                weight_var = 'weight_all'
 
         data['product'] = data[value_col].values * data[weight_var].values
         data['weights_filtered'] = data[weight_var].where(~data['product'].isnull())
@@ -70,21 +68,19 @@ def cat_grouped_wm(data, cat_vars, weight_var, grouper,NA_values,count_type,unwe
     for value_col in cat_vars:
         # select correct weight for employer survey
         if survey == 'e':
-            if value_col in ['e_new_fut_intent', 'e_barrier_90',
-       'e_barrier_97', 'e_barrier_99', 'e_barrier_999', 'e_barrier_01',
-       'e_barrier_02', 'e_barrier_03', 'e_barrier_04', 'e_barrier_05',
-       'e_barrier_06', 'e_barrier_07', 'e_barrier_08', 'e_barrier_09',
-       'e_barrier_10', 'e_barrier_11', 'e_barrier_12', 'e_barrier_13',
-       'e_barrier_14', 'e_barrier_15', 'e_reason24', 'e_reason25',
-       'e_reason26', 'e_reason27', 'e_reason1', 'e_reason2', 'e_reason3',
-       'e_reason4', 'e_reason5', 'e_reason6', 'e_reason7', 'e_reason8',
-       'e_reason9', 'e_reason10', 'e_reason11', 'e_reason12',
-       'e_reason13', 'e_reason14', 'e_reason15', 'e_reason16',
-       'e_reason17', 'e_reason18', 'e_reason19', 'e_reason20',
-       'e_reason21', 'e_reason22', 'e_reason23', 'e_further_res']:
-                weight_var = 'weight_general'
-            else:
-                weight_var = 'weight_valid'
+            if value_col in ['hiring_intent', 'barrier_90',
+       'barrier_97', 'barrier_99', 'barrier_999', 'barrier_01',
+       'barrier_02', 'barrier_03', 'barrier_04', 'barrier_05',
+       'barrier_06', 'barrier_07', 'barrier_08', 'barrier_09',
+       'barrier_10', 'barrier_11', 'barrier_12', 'barrier_13',
+       'barrier_14', 'barrier_15', 'reason24', 'reason25',
+       'reason26', 'reason27', 'reason1', 'reason2', 'reason3',
+       'reason4', 'reason5', 'reason6', 'reason7', 'reason8',
+       'reason9', 'reason10', 'reason11', 'reason12',
+       'reason13', 'reason14', 'reason15', 'reason16',
+       'reason17', 'reason18', 'reason19', 'reason20',
+       'reason21', 'reason22', 'reason23', 'further_research']:
+                weight_var = 'weight_all'
 
         # create array of relevant values and remove those specified as NAs
         values = data[value_col].unique()
@@ -152,7 +148,7 @@ def cat_grouped_wm(data, cat_vars, weight_var, grouper,NA_values,count_type,unwe
 # %%
 
 def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, count_type=None, yearlast=False,rounded=False,combine_years=False,
-                unweighted=False,force_weight=False, weight_var='WEIGHT', year_var='SurveyYear',low_N=5,NA_values=None):
+                unweighted=False,force_weight=False, weight_var='weight', year_var='survey_year',low_N=5,NA_values=None):
 
     # these are expected to be lists later on, so if not specificed change to empty lists
     if grouper is None:
@@ -167,24 +163,20 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
     # set survey-dependent variables. Weight and year default to combined student dataset versions, overrides if employer selected.
     # might be computationally slower, but more user friendly to just specify 'e', not two different variable names.
     # custom variable names for other datasets can be fed in as arguments and won't be changed unless survey argument is set to 'e'
-    if survey == 's':
+ 
         # do unweighted if data fitered to only one rto
         # this is idiot proofing so even if the default weighted version is used, rto level data will only be weighted if you set force_weight to True
-        if (len(data['TOID'].unique()) == 1) & (force_weight==False):
-            print('ONLY ONE RTO DETECTED, UNWEIGHTED CALCULATIONS PRODUCED')
-            unweighted = True   
+    if (len(data['toid'].unique()) == 1) & (force_weight==False):
+        print('ONLY ONE RTO DETECTED, UNWEIGHTED CALCULATIONS PRODUCED')
+        unweighted = True   
 
-    elif survey == 'e':
-        # do unweighted if data fitered to only one rto
-        if len(data['e_toid'].unique()) == 1 & (force_weight==False):
-            print('ONLY ONE RTO DETECTED, UNWEIGHTED CALCULATIONS PRODUCED')
-            unweighted = True
-        # set weight and year vars
+    if survey == 'e':
+        # set default year var for employer
         year_var = 'year'
 
     # do unweighted if grouped by rto (same reason as above)
 
-    if (any(item in grouper for item in ['TOID','RTOName','RTOTradingName','e_toid','rtoname','e_rto_name'])) & (force_weight==False):
+    if (any(item in grouper for item in ['toid','rto_name','rto_trading_name'])) & (force_weight==False):
         print('GROUPED BY RTO, UNWEIGHTED CALCULATIONS PRODUCED')
         unweighted = True
 
@@ -212,11 +204,9 @@ def Survey_query(data,survey='s',variables=None, cat_vars=None,grouper=None, cou
     columns.mask((columns > 2) ,0,inplace=True)
     # create list of other columns we need (grouping and weight)
     cols = grouper.copy()
-    if survey != 'e':
-        cols.append(weight_var)
-    else:
-        cols.append('weight_general')
-        cols.append('weight_valid')
+    cols.append(weight_var)
+    if survey == 'e':
+        cols.append('weight_all)
     cols = cols + cat_vars
 
     # merge cleaned columns with grouping variables and weights. Indexes match as they're from the same df to start with.
