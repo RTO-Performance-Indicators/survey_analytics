@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+pd.options.mode.chained_assignment=None # default='warn'
+
 def convert_to_binary(values):
     
     # Convert for likert scale questions with the following values:
@@ -19,6 +21,7 @@ def convert_to_binary(values):
             # It makes sense when called from calc_prop function below
             print('Consider setting binary_conversion argument to False.')
     return [0 if x in zeroes else 1 for x in values]
+
 # Test
 # convert_to_binary([1, 1, 2, 2, 3])
 # convert_to_binary([1, 1, 0, 0, 1])
@@ -78,18 +81,23 @@ def calc_prop(df, groups=[], vars=[], min_n=5, weighted=True, weight='weight', b
     return(result)
 
 # Test
-# data = pd.DataFrame({
-#     'a': [1, 2, 3, 4, 5, 6, 7, 8, 10, -999],
-#     'WEIGHT': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-# })
-# calc_prop(df=data, groups=[], vars=['a'], weight='WEIGHT')
+data = pd.DataFrame({
+    'sat': [0, 0, 1, 0, 1, 1],
+    'group1': ['a', 'a', 'b', 'b', 'a', 'b'],
+    'group2': ['c', 'd', 'c', 'c', 'd', 'c'],
+    'weight': [1, 1, 1, 1, 1, 1]
+})
 
-# data = pd.DataFrame({
-#     's_': [0, 0, 1, 0, 1, 1],
-#     'WEIGHT': [1, 1, 1, 1, 1, 1]
-# })
-# calc_prop(df=data, groups=[], vars=['s_'])
-# calc_prop(df=data, groups=[], vars=['s_'], binary_conversion=True)
+# Using all of the dataset produces no Pandas warning
+# calc_prop(df=data, groups=['group2'], vars=['sat'], binary_conversion=True)
+
+# Using a subset of the dataset produces a Pandas warning to use .loc
+# calc_prop(df=data[data['group1'] == 'a'], groups=['group2'], vars=['sat'], binary_conversion=True)
+
+# Using .loc removes the Pandas warning, but is much more verbose
+# calc_prop(df=data.loc[data['group2'] == 'c', ['group2', 'sat', 'weight']], groups=['group2'], vars=['sat'], binary_conversion=True)
+
+# Solution: pd.options.mode.chained_assignment=None # default='warn'
 
 def calc_prop_measures(df, groups=[], vars=[], min_n=5, weighted=True):
     temp = (
